@@ -1,0 +1,15 @@
+This is my design doc for this game:
+
+At it's core, it's a very simple 2.5d shooter I think.
+One person can play with the full screen, and if a second person presses the join button, then they can hop in whenever.
+If you've already joined, then you can leave by pressing the same button and selecting "exit" on a yes/no prompt.
+The point of the game is to shoot zombies while finding various random objects which are your goals.
+There's a high score table? You can be ranked in terms of zombies killed, objects gotten, time survived? Time survived seems like a bad idea, perhaps just total score.
+That's actually a lot of effort to get that screen working nicely, but it would be awesome.
+
+
+I now have to design it so that everything can be drawn onto four different canvases.
+It's pretty simple for the most part, just have an offset that we pass in to the drawing function which will make it centered around the center of the canvas, and then draw it centered on each player.
+The game will generate seven canvases at start? 24 gigs of ram means that should be fine. Maybe it should have a variable for whether or not to store the ones it doesn't use. This is in the gameplay class.
+
+Gameplay class has the canvases, and has a single level class which has four player classes?
