@@ -1,0 +1,21 @@
+-- new
+-- name
+-- seconds per frame
+-- start tile
+-- number of tiles
+
+new
+steady
+.25
+0
+2
+
+new
+walkRight
+.05
+1
+14
+
+mirror
+walkLeft
+walkRight

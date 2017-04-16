@@ -19,7 +19,8 @@ function Level:_init(game, gameplay)
 	self.tilesetHeight = 6
 	self.tilesetWidth = 8
 	self.tileScale = 4
-	self.tileSize = 32*self.tileScale
+	self.tileWidth = 32*self.tileScale
+	self.tileHeight = 32*self.tileScale
 	
 	-- self.tileFiles = {} -- a table of keys to filenames
 	self:loadTileset(self.tilesetFilename)
@@ -43,8 +44,8 @@ function Level:loadTileset(filename)
 	for y = 0, self.tilesetHeight-1 do
 		for x = 0, self.tilesetWidth-1 do
 			-- print(x..", "..y..": "..tilesetMeaning[i])
-			self.tilesetQuads[tilesetMeaning[i]] = love.graphics.newQuad(x*self.tileSize, y*self.tileSize,
-										self.tileSize, self.tileSize, imageWidth, imageHeight)
+			self.tilesetQuads[tilesetMeaning[i]] = love.graphics.newQuad(x*self.tileWidth, y*self.tileHeight,
+										self.tileWidth, self.tileHeight, imageWidth, imageHeight)
 			i = i + 1
 		end
 	end
@@ -79,7 +80,7 @@ function Level:loadLevelFromFile(filename)
 			local base = string.sub(line, i, i) -- the first character
 			local top = string.sub(line, i+1, i+1) -- the first character
 			if top == "_" then
-				self.playerspawns[#self.playerspawns+1] = {x*self.tileSize, y*self.tileSize}
+				self.playerspawns[#self.playerspawns+1] = {x*self.tileWidth, y*self.tileHeight}
 			end
 			self.levelbase[#self.levelbase][#self.levelbase[#self.levelbase]+1] = base
 			self.levelbase[#self.levelbase][#self.levelbase[#self.levelbase]+1] = top
@@ -96,7 +97,7 @@ function Level:drawbase(focusX, focusY, focusWidth, focusHeight)
 			-- if self.tilesetQuads[self.levelbase[y+1][x+1]] == nil then
 			-- 	print(self.levelbase[y+1][x+1])
 			-- end
-			love.graphics.draw(self.tilesetImage, self.tilesetQuads[self.levelbase[y+1][x+1]], x*self.tileSize/2-focusX, y*self.tileSize-focusY, 0)
+			love.graphics.draw(self.tilesetImage, self.tilesetQuads[self.levelbase[y+1][x+1]], x*self.tileWidth/2-focusX, y*self.tileHeight-focusY, 0)
 		end
 	end
 end
@@ -105,7 +106,7 @@ function Level:drawtop(focusX, focusY, focusWidth, focusHeight)
 	-- only draw the parts that it actually may need to, because why not, right?
 	for y = 0, #self.leveltop-1 do
 		for x = 0, #self.leveltop[1]-1 do
-			love.graphics.draw(self.tilesetImage, self.tilesetQuads[self.leveltop[y+1][x+1]], x*self.tileSize-focusX, y*self.tileSize-focusY, 0)
+			love.graphics.draw(self.tilesetImage, self.tilesetQuads[self.leveltop[y+1][x+1]], x*self.tileWidth-focusX, y*self.tileHeight-focusY, 0)
 		end
 	end
 end

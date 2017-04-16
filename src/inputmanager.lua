@@ -14,8 +14,12 @@ function InputManager:_init(game)
 	self.deadzone = .2 -- whether or not to ignore it when checking if the action is down
 	self.keyboardInputMap = {w = "up", a = "left", s = "down", d = "right", i = "up", j = "left", k="down", l="right",
 								z = "shoot", b = "shoot"}
+	self.keyboardInputMap["5"] = "start"
+	self.keyboardInputMap["6"] = "start"
 	self.keyboardPlayerMap = {w = 1, a = 1, s = 1, d = 1, z = 1,
 								i = 2, j = 2, k = 2, l = 2, b = 2}
+	self.keyboardPlayerMap["5"] = 1
+	self.keyboardPlayerMap["6"] = 2
 	self.joystickInputMap = {axis = {}, button = {}}
 
 	self.inputs = {{}, {}, {}, {}}
