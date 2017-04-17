@@ -125,7 +125,7 @@ function Bullet:update(dt)
 				end
 			end
 		end
-	else -- check for what animals it may have hit!
+	else -- check for what enemies it may have hit!
 		for i, p in ipairs(self.enemylist) do
 			-- check if collided with the player
 			if self.x > p.x-p.collisionWidth/2 and self.x < p.x+p.collisionWidth/2 then

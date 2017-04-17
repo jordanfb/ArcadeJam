@@ -55,11 +55,13 @@ function MainMenu:keypressed(key, unicode)
 	if self.requireStartButton then
 		if self.startButtons[key] ~= nil then
 			self.game.gameplay:setPlayersPlaying({self.startButtons[key]})
+			self.game.gameplay.level:reloadLevel()
 			self.game:addToScreenStack(self.game.gameplay)
 		end
 	else
 		if self.buttons[key] ~= nil then
 			self.game.gameplay:setPlayersPlaying({self.buttons[key]})
+			self.game.gameplay.level:reloadLevel()
 			self.game:addToScreenStack(self.game.gameplay)
 		end
 	end

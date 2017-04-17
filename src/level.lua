@@ -28,10 +28,14 @@ function Level:_init(game, gameplay, playersInGame, enemyGraphics)
 	
 	self:reloadLevel()
 	self:loadTileset(self.tilesetFilename)
-	self:loadLevelFromFile("levels/level1.txt")
 
 	self:loadCollidingTiles()
 	self.debugCollisionHighlighting = {}
+end
+
+function Level:reloadLevel()
+	self:resetLevel()
+	self:loadLevelFromFile("levels/level1.txt")
 end
 
 function Level:loadCollidingTiles()
@@ -65,7 +69,7 @@ function Level:loadTileset(filename)
 	end
 end
 
-function Level:reloadLevel()
+function Level:resetLevel()
 	self.difficulty = 0
 	self.score = 0
 	self.killed = 0
@@ -86,6 +90,7 @@ function Level:loadLevelFromFile(filename)
 	local x = 0
 	local y = 0
 	self.playerspawns = {}
+	self.numberOfEnemies = 0
 	for line in love.filesystem.lines(filename) do
 		-- if line == "--INITIAL STATUS--" then
 		-- 	break
@@ -344,12 +349,12 @@ function Level:update(dt)
 			v:onDeath()
 			table.remove(self.enemies, i)
 			self.numberOfEnemies = self.numberOfEnemies - 1
-			if self.numberOfEnemies == 0 then
-				self.game:popScreenStack()
-				self.game:addToScreenStack(self.game.winMenu)
-				return
-			end
 			-- table.insert(self.blemishes, {v.x, v.y})
 		end
+	end
+	if self.numberOfEnemies == 0 then
+		self.game:popScreenStack()
+		self.game:addToScreenStack(self.game.winMenu)
+		return
 	end
 end

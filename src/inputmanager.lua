@@ -24,6 +24,12 @@ function InputManager:_init(game)
 	self.keyboardInputMap["8"] = "shootup"
 	self.keyboardInputMap["3"] = "shoot"
 	self.keyboardInputMap["9"] = "shoot"
+	if not self.game.arcadeCabinet then
+		self.keyboardInputMap['/']="shoot"
+		self.keyboardInputMap.v="shoot"
+		self.keyboardInputMap.lshift = "shoot"
+		self.keyboardInputMap.rshift = "shoot"
+	end
 	self.keyboardPlayerMap = {w = 1, a = 1, s = 1, d = 1, z = 1, x = 1, c = 1,
 								i = 2, j = 2, k = 2, l = 2, b = 2, n = 2, m = 2}
 	self.keyboardPlayerMap["5"] = 1
@@ -33,6 +39,13 @@ function InputManager:_init(game)
 	self.keyboardPlayerMap["3"] = 1
 	self.keyboardPlayerMap["7"] = 2
 	self.keyboardPlayerMap["8"] = 2
+	self.keyboardPlayerMap["9"] = 2
+	if not self.game.arcadeCabinet then
+		self.keyboardPlayerMap["/"] = 2
+		self.keyboardPlayerMap.rshift = 2
+		self.keyboardPlayerMap.v = 1
+		self.keyboardPlayerMap.lshift = 1
+	end
 	self.keyboardPlayerMap["9"] = 2
 	self.joystickInputMap = {axis = {}, button = {}}
 

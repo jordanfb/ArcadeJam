@@ -70,6 +70,8 @@ function Player:_init(game, gameplay, playerNumber)
 	self.color = {255, 255, 255, 255}
 	self.helmetColor = {255, 255, 255, 255}
 	self.controlScheme = "onebutton" -- this gets overwritten to the default value in gameplay
+
+	self:getGunTipLocation()
 end
 
 function Player:randomizeLoadingin()

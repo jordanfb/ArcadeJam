@@ -220,6 +220,9 @@ function Gameplay:draw()
 		love.graphics.setCanvas()
 		love.graphics.setColor(255, 255, 255)
 		love.graphics.draw(self.singleCanvas, 0, 0, 0, love.graphics.getWidth()/self.game.SCREENWIDTH, love.graphics.getHeight()/self.game.SCREENHEIGHT)
+		if didScreenshake then
+			love.graphics.translate(-self.screenshakedx, -self.screenshakedy)
+		end
 		self:drawPlayerIndicators()
 	elseif self.numPlayersPlaying == 2 then
 		-- if self.game.screenShake and self.wholeScreenshakeDuration > 0 then

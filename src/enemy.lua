@@ -14,7 +14,7 @@ function Enemy:_init(type, x, y, playersInGame, gameplay, level, graphics)
 	local size = sizeTable[self.type]
 	self.collisionWidth = size[1] * scale
 	self.collisionHeight = size[2] * scale
-	local healthTable = {ball=100, spitter = 200, crawler = 300}
+	local healthTable = {ball=100, spitter = 100, crawler = 150}
 	self.health = healthTable[self.type]
 	self.graphics = graphics
 	self.x = x
@@ -103,8 +103,8 @@ function Enemy:update(dt, playersInGame)
 		self:handleMovement(self.dx, self.dy, dt)
 		self.damageCoolDown = self.damageCoolDown - dt
 		for i, p in ipairs(self.players) do
-			if self.x + self.collisionWidth > p.x and self.x < p.x + p.collisionWidth then
-				if self.y + self.collisionHeight > p.y and self.y < p.y + p.collisionHeight then
+			if self.x + self.collisionWidth/2 > p.x - p.collisionWidth/2 and self.x - self.collisionWidth/2 < p.x + p.collisionWidth/2 then
+				if self.y + self.collisionHeight/2 > p.y - p.collisionHeight/2 and self.y - self.collisionHeight/2 < p.y + p.collisionHeight/2 then
 					if self.damageCoolDown <= 0 then
 						self.damageCoolDown = 3
 						p.health = p.health - self.contactDamage

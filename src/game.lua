@@ -21,6 +21,10 @@ Game = class()
 
 function Game:_init()
 	-- these are for draw stacks:
+	self.arcadeCabinet = false
+
+
+	
 	self.drawUnder = false
 	self.updateUnder = false
 	math.randomseed(os.time())
