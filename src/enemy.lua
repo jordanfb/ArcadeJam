@@ -73,8 +73,6 @@ function Enemy:draw(viewx, viewy, viewWidth, viewHeight)
 	elseif self.type == "spitter" then
 		if self.health > 0 then
 			love.graphics.draw(self.graphics.image, self.graphics.animations[self.type..self.animationState][self.animationFrame], self.x-viewx, self.y-viewy, self.angle, 1, 1, self.graphics.animationDetails.imageWidth/2, self.graphics.animationDetails.imageWidth/2)--, self.graphics.animationDetails.imageWidth/2, self.graphics.animationDetails.imageWidth/2)
-			love.graphics.setColor(255, 0, 0)
-			love.graphics.rectangle("line", self.x-viewx, self.y-viewy, self.tileWidth, self.tileHeight)
 		end
 	elseif self.type == "crawler" then
 		if self.health > 0 then
@@ -141,6 +139,8 @@ function Enemy:update(dt, playersInGame)
 				end
 			end
 		end
+	else
+		self.animationState = "Dying"
 	end
 	self.animationTime = self.animationTime + dt
 	if self.animationTime > self.graphics.animationDetails[self.type..self.animationState].frametime then

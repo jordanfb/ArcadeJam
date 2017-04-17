@@ -24,7 +24,7 @@ ballRight
 
 -- this is a temp thing for death!
 switch
-Dead
+dead
 ballDying
 1
 8
@@ -33,7 +33,7 @@ ballDying
 -- for dead it'll be invisible anyways, so it shouldn't matter
 -- currently I'm just having everything go to this one death, because why not...
 new
-ballDead
+balldead
 1
 8
 1
@@ -59,14 +59,14 @@ crawlerRight
 
 -- this is a temp thing for death!
 switch
-Dead
+dead
 crawlerDying
 1
 0
 1
 
 new
-crawlerDead
+crawlerdead
 1
 0
 1
@@ -90,14 +90,14 @@ spitterSpit
 
 -- this is a temp thing for death!
 switch
-Dead
+dead
 spitterDying
 1
 24
 1
 
 new
-spitterDead
+spitterdead
 1
 24
 1

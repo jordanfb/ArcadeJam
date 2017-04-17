@@ -282,7 +282,6 @@ function Level:drawEnemies(focusX, focusY, focusWidth, focusHeight)
 	for i, v in ipairs(self.enemies) do
 		v:draw(focusX, focusY, focusWidth, focusHeight)
 	end
-	love.graphics.printf(self.numberOfEnemies, 10, 10, 100, "left")
 end
 
 function Level:drawBlemishes(focusX, focusY, focusWidth, focusHeight)

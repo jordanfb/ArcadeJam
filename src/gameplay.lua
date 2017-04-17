@@ -112,6 +112,8 @@ function Gameplay:addPlayerToGame(playernumber)
 	self.players[playernumber].loadingin = true
 	self.players[playernumber]:randomizeLoadingin()
 	self.players[playernumber].animationState = "steady"
+	self.players[playernumber].animationFrame = 1
+	self.players[playernumber].gunAnimationFrame = 1
 	self.players[playernumber].kills = 0
 	self.players[playernumber].points = 0
 	self.players[playernumber].controlScheme = self.defaltControlScheme
@@ -181,7 +183,7 @@ function Gameplay:drawPlayerIndicators()
 		love.graphics.printf("P1: Join in now!", 0, 0, love.graphics.getWidth(), "left")
 	else
 		love.graphics.setColor(self.players[1].color)
-		love.graphics.printf("P1: Health "..self.players[1].health.." Points: "..self.players[1].points, 0, 0, love.graphics.getWidth(), "left")
+		love.graphics.printf("P1: Health "..math.max(self.players[1].health, 0).." Points: "..self.players[1].points, 0, 0, love.graphics.getWidth(), "left")
 
 	end
 	if not self.playersPlaying[2] then
@@ -189,7 +191,7 @@ function Gameplay:drawPlayerIndicators()
 		love.graphics.printf("P2: Join in now!", 0, 0, love.graphics.getWidth(), "right")
 	else
 		love.graphics.setColor(self.players[2].color)
-		love.graphics.printf("P2: Health: "..self.players[2].health.." Points: "..self.players[2].points, 0, 0, love.graphics.getWidth(), "right")
+		love.graphics.printf("P2: Health: "..math.max(self.players[2].health, 0).." Points: "..self.players[2].points, 0, 0, love.graphics.getWidth(), "right")
 	end
 	if self.game.playerLimit == 4 then
 		--
