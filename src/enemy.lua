@@ -65,20 +65,20 @@ function Enemy:draw(viewx, viewy, viewWidth, viewHeight)
 		if self.health > 0 then
 			-- love.graphics.ellipse("fill", self.x-viewx, self.y-viewy, self.tileWidth/2, self.tileHeight/2)
 			if self.dx > 0 then
-				love.graphics.draw(self.graphics.image, self.graphics.animations[self.type..self.animationState][self.animationFrame], self.x-viewx+self.tileWidth/2, self.y-viewy+self.tileHeight/2, self.angle, 1, 1, self.graphics.animationDetails.imageWidth/2, self.graphics.animationDetails.imageWidth/2)
+				love.graphics.draw(self.graphics.image, self.graphics.animations[self.type..self.animationState][self.animationFrame], self.x-viewx, self.y-viewy, self.angle, 1, 1, self.graphics.animationDetails.imageWidth/2, self.graphics.animationDetails.imageWidth/2)
 			else
-				love.graphics.draw(self.graphics.image, self.graphics.animations[self.type..self.animationState][self.animationFrame], self.x-viewx+self.tileWidth/2, self.y-viewy+self.tileHeight/2, self.angle, -1, 1, self.graphics.animationDetails.imageWidth/2, self.graphics.animationDetails.imageWidth/2)
+				love.graphics.draw(self.graphics.image, self.graphics.animations[self.type..self.animationState][self.animationFrame], self.x-viewx, self.y-viewy, self.angle, -1, 1, self.graphics.animationDetails.imageWidth/2, self.graphics.animationDetails.imageWidth/2)
 			end
 		end
 	elseif self.type == "spitter" then
 		if self.health > 0 then
-			love.graphics.draw(self.graphics.image, self.graphics.animations[self.type..self.animationState][self.animationFrame], self.x-viewx+self.tileWidth/2, self.y-viewy+self.tileHeight/2, self.angle, 1, 1, self.tileWidth/2, self.tileHeight/2)--, self.graphics.animationDetails.imageWidth/2, self.graphics.animationDetails.imageWidth/2)
+			love.graphics.draw(self.graphics.image, self.graphics.animations[self.type..self.animationState][self.animationFrame], self.x-viewx, self.y-viewy, self.angle, 1, 1, self.graphics.animationDetails.imageWidth/2, self.graphics.animationDetails.imageWidth/2)--, self.graphics.animationDetails.imageWidth/2, self.graphics.animationDetails.imageWidth/2)
 			love.graphics.setColor(255, 0, 0)
 			love.graphics.rectangle("line", self.x-viewx, self.y-viewy, self.tileWidth, self.tileHeight)
 		end
 	elseif self.type == "crawler" then
 		if self.health > 0 then
-			love.graphics.draw(self.graphics.image, self.graphics.animations[self.type..self.animationState][self.animationFrame], self.x-viewx, self.y-viewy, 0, self:sign(self.dx), 1, self.tileWidth/2, self.tileHeight/2)--, self.graphics.animationDetails.imageWidth/2, self.graphics.animationDetails.imageWidth/2)
+			love.graphics.draw(self.graphics.image, self.graphics.animations[self.type..self.animationState][self.animationFrame], self.x-viewx, self.y-viewy, 0, self:sign(self.dx), 1, self.graphics.animationDetails.imageWidth/2, self.graphics.animationDetails.imageWidth/2)--, self.graphics.animationDetails.imageWidth/2, self.graphics.animationDetails.imageWidth/2)
 		end
 		-- love.graphics.setColor(255, 0, 0)
 		-- love.graphics.rectangle("line", self.x-viewx, self.y-viewy, self.tileWidth, self.tileHeight)
@@ -94,54 +94,54 @@ function Enemy:sign(num)
 end
 
 function Enemy:update(dt, playersInGame)
-	if self.oldAnimationState == "Spit" and self.animationState ~= "Spit" then
-		-- fire a bullet
-		self.shootTimer = self.shootTime+math.random(-1, 1)
-		self.gameplay:createBullet(self.x+self.tileWidth/2, self.y+self.tileHeight/2, math.cos(self.angle), math.sin(self.angle), self.shootSpeed, -1, self.color, true, false)
-
-	end
-	self.oldAnimationState = self.animationState
-	self.players = playersInGame
-	self:handleMovement(self.dx, self.dy, dt)
-	self.damageCoolDown = self.damageCoolDown - dt
-	for i, p in ipairs(self.players) do
-		if self.x + self.collisionWidth > p.x and self.x < p.x + p.collisionWidth then
-			if self.y + self.collisionHeight > p.y and self.y < p.y + p.collisionHeight then
-				if self.damageCoolDown <= 0 then
-					self.damageCoolDown = 3
-					p.health = p.health - self.contactDamage
-					break
+	if self.health > 0 then
+		if self.oldAnimationState == "Spit" and self.animationState ~= "Spit" then
+			-- fire a bullet
+			self.shootTimer = self.shootTime+math.random(-1, 1)
+			self.gameplay:createBullet(self.x, self.y, math.cos(self.angle), math.sin(self.angle), self.shootSpeed, -1, self.color, true, false)
+		end
+		self.oldAnimationState = self.animationState
+		self.players = playersInGame
+		self:handleMovement(self.dx, self.dy, dt)
+		self.damageCoolDown = self.damageCoolDown - dt
+		for i, p in ipairs(self.players) do
+			if self.x + self.collisionWidth > p.x and self.x < p.x + p.collisionWidth then
+				if self.y + self.collisionHeight > p.y and self.y < p.y + p.collisionHeight then
+					if self.damageCoolDown <= 0 then
+						self.damageCoolDown = 3
+						p.health = p.health - self.contactDamage
+						break
+					end
+				end
+			end
+		end
+		if self.type == "spitter" then
+			if self.health > 0 then
+				self:findClosestPlayer()
+				if self.closestPlayer ~= -1 then
+					self.angle = math.atan2(self.closestPlayer.y-self.y, self.closestPlayer.x-self.x)
+				end
+				self.shootTimer = self.shootTimer - dt
+				if self.shootTimer <= 0 then
+					self.animationState = "Spit"
+				end
+			end
+		elseif self.type == "crawler" then
+			if self.health > 0 then
+				self:findClosestPlayer()
+				if self.closestPlayer ~= -1 then
+					self.angle = math.atan2(self.closestPlayer.y-self.y, self.closestPlayer.x-self.x)
+				end
+				if self.minDistanceSquared < self.searchRadius2*self.tileWidth*self.tileWidth then
+					self.dx = math.cos(self.angle)*self.speed
+					self.dy = math.sin(self.angle)*self.speed
+				else
+					self.dx = 0
+					self.dy = 0
 				end
 			end
 		end
 	end
-	if self.type == "spitter" then
-		if self.health > 0 then
-			self:findClosestPlayer()
-			if self.closestPlayer ~= -1 then
-				self.angle = math.atan2(self.closestPlayer.y-(self.y+self.tileHeight/2), self.closestPlayer.x-(self.x+self.tileWidth/2))
-			end
-			self.shootTimer = self.shootTimer - dt
-			if self.shootTimer <= 0 then
-				self.animationState = "Spit"
-			end
-		end
-	elseif self.type == "crawler" then
-		if self.health > 0 then
-			self:findClosestPlayer()
-			if self.closestPlayer ~= -1 then
-				self.angle = math.atan2(self.closestPlayer.y-(self.y+self.tileHeight/2), self.closestPlayer.x-(self.x+self.tileWidth/2))
-			end
-			if self.minDistanceSquared < self.searchRadius2*self.tileWidth*self.tileWidth then
-				self.dx = math.cos(self.angle)*self.speed
-				self.dy = math.sin(self.angle)*self.speed
-			else
-				self.dx = 0
-				self.dy = 0
-			end
-		end
-	end
-
 	self.animationTime = self.animationTime + dt
 	if self.animationTime > self.graphics.animationDetails[self.type..self.animationState].frametime then
 		self.animationFrame = self.animationFrame + 1
@@ -158,22 +158,18 @@ end
 function Enemy:findClosestPlayer()
 	local minDistanceSquared = -1
 	local closestPlayer = -1
-	-- print("checking")
 	for i, p in ipairs(self.players) do
-		-- print("player"..i)
 		local distance2 = (self.x - p.x)*(self.x - p.x)+(self.y - p.y)*(self.y - p.y)
-		if minDistanceSquared == -1 or distance2 < minDistanceSquared then
-			minDistanceSquared = distance2
-			closestPlayer = p
+		if p.health > 0 then
+			if minDistanceSquared == -1 or distance2 < minDistanceSquared then
+				minDistanceSquared = distance2
+				closestPlayer = p
+			end
 		end
 	end
 	self.closestPlayer = closestPlayer
 	self.minDistanceSquared = minDistanceSquared
 end
-
--- function Enemy:getDistanceSquared(x, y)
--- 	return (self.x - x)*(self.x - x)+(self.y - y)*(self.y - y)
--- end
 
 function Enemy:onDeath()
 	--

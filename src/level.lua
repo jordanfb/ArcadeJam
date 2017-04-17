@@ -98,21 +98,21 @@ function Level:loadLevelFromFile(filename)
 			local base = string.sub(line, i, i) -- the first character
 			local top = string.sub(line, i+1, i+1) -- the first character
 			if top == "_" then
-				table.insert(self.playerspawns, {x*self.tileWidth, y*self.tileHeight})
+				table.insert(self.playerspawns, {(x+.5)*self.tileWidth, (y+.5)*self.tileHeight})
 				top = " "
 			end
 			if top == "O" then
-				self:makeEnemy("ball", x*self.tileWidth, y*self.tileHeight)
+				self:makeEnemy("ball", (x+.5)*self.tileWidth, (y+.5)*self.tileHeight)
 				top = " "
 				self.numberOfEnemies = self.numberOfEnemies + 1
 			end
 			if top == "c" then
-				self:makeEnemy("spitter", x*self.tileWidth, y*self.tileHeight)
+				self:makeEnemy("spitter", (x+.5)*self.tileWidth, (y+.5)*self.tileHeight)
 				top = " "
 				self.numberOfEnemies = self.numberOfEnemies + 1
 			end
 			if top == "m" then
-				self:makeEnemy("crawler", x*self.tileWidth, y*self.tileHeight)
+				self:makeEnemy("crawler", (x+.5)*self.tileWidth, (y+.5)*self.tileHeight)
 				top = " "
 				self.numberOfEnemies = self.numberOfEnemies + 1
 			end
@@ -282,6 +282,7 @@ function Level:drawEnemies(focusX, focusY, focusWidth, focusHeight)
 	for i, v in ipairs(self.enemies) do
 		v:draw(focusX, focusY, focusWidth, focusHeight)
 	end
+	love.graphics.printf(self.numberOfEnemies, 10, 10, 100, "left")
 end
 
 function Level:drawBlemishes(focusX, focusY, focusWidth, focusHeight)

@@ -94,8 +94,8 @@ end
 function Gameplay:addPlayerToGame(playernumber)
 	-- set the player's location in the level (at a spawn point)
 	local spawnPlace = self.level.playerspawns[math.random(1, #self.level.playerspawns)]
-	self.players[playernumber].x = spawnPlace[1] + self.players[playernumber].imageWidth/2
-	self.players[playernumber].y = spawnPlace[2] + self.players[playernumber].imageHeight/2
+	self.players[playernumber].x = spawnPlace[1]
+	self.players[playernumber].y = spawnPlace[2]
 	local color = {math.random(100, 200), math.random(100, 200), math.random(100, 200), 255}
 	self.players[playernumber].color = color
 	local helmetColor = {color[1], color[2], color[3], 255}
