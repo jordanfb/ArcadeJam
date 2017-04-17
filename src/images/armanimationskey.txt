@@ -5,17 +5,13 @@
 -- number of tiles
 
 new
-steady
-.25
+still
+1
 0
-2
+1
 
 new
-walkRight
+firing
 .05
 1
-14
-
-mirror
-walkLeft
-walkRight
+3

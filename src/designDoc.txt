@@ -13,3 +13,69 @@ It's pretty simple for the most part, just have an offset that we pass in to the
 The game will generate seven canvases at start? 24 gigs of ram means that should be fine. Maybe it should have a variable for whether or not to store the ones it doesn't use. This is in the gameplay class.
 
 Gameplay class has the canvases, and has a single level class which has four player classes?
+
+
+Things to do:
+Bullets:
+	-animations
+-sounds
+	-explosions!
+	-screen shake
+
+Enemies:
+-animations
+-sounds
+-deaths!
+-screen shake
+-damage
+-mini-bosses
+
+Players:
+	-random colors
+-score when you die.
+-death animations
+
+Menu:
+	-pvp? -- rather than a menu option, have it be a cheat? that way I can get away with the attract screen
+-AI? -- honestly just turn towards the nearest enemy and shoot? and a random walk?
+-sounds
+-scores
+
+AI:
+-pathing, tile based, so not terrible
+-whether you're within sight
+-honestly that's all it really needs, right? just path towards the players if you're within a certain distance away
+-they're zombie things after all, they just go towards you for the most part.
+
+Cheats:
+	-pvp
+-ai player? just spawn in a npc player, who, depending on whether pvp is on will attack you.
+
+	Macguffins:
+		-animations
+		-sounds
+		-uses
+		-screen shake
+		-scores
+
+Whole Game:
+-sounds
+	-screen shake
+-scores
+-more of a tileset
+
+	Grenades:
+		-animations
+		-explosions
+		-screen shake
+
+Levels:
+	-procedural generation?
+
+
+Currently it's 9:32 AM, I'm thinking I need to focus on three things:
+Enemies
+Sound
+Score
+
+ESS for short.

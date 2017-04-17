@@ -20,10 +20,13 @@ function MainMenu:_init(game)
 
 	self.game = game
 
-	self.requireStartButton = true -- whether or not it only exits when you press a start button
+	self.requireStartButton = false -- whether or not it only exits when you press a start button
 	self.startButtons = {}
 	self.startButtons["5"] = 1
 	self.startButtons["6"] = 2
+	self.buttons = {["1"]=1, ["2"]=1, ["3"]=1, ["5"]=1, ["6"]=2, ["7"]=2, ["8"]=2, ["9"]=2,
+					w=1, a=1, s=1, d=1, z=1, x=1, c=1,
+					i=2, j=2, k=2, l=2, b=2, n=2, m=2}
 end
 
 function MainMenu:load()
@@ -36,7 +39,8 @@ function MainMenu:leave()
 end
 
 function MainMenu:draw()
-	love.graphics.printf("PRESS START TO PLAY", 0, love.graphics.getHeight()/2, love.graphics.getWidth(), "center")
+	local text = "PRESS ANY BUTTON TO PLAY!\nYou're now an agent of a top secret organization dedicated to\nremoving darkness around the world.\nYour current mission is to eliminate the forces of darkness\nthat have captured some random room\nIt's your job. Go do it."
+	love.graphics.printf(text, 0, love.graphics.getHeight()/4, love.graphics.getWidth(), "center")
 end
 
 function MainMenu:update(dt)
@@ -54,7 +58,10 @@ function MainMenu:keypressed(key, unicode)
 			self.game:addToScreenStack(self.game.gameplay)
 		end
 	else
-		self.game:addToScreenStack(self.game.gameplay)
+		if self.buttons[key] ~= nil then
+			self.game.gameplay:setPlayersPlaying({self.buttons[key]})
+			self.game:addToScreenStack(self.game.gameplay)
+		end
 	end
 end
 

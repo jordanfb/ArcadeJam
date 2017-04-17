@@ -12,6 +12,8 @@ require "mainmenu"
 require "gameplay"
 require "inputmanager"
 require "class"
+require "winmenu"
+require "mainmenu"
 
 Game = class()
 
@@ -21,6 +23,7 @@ function Game:_init()
 	-- these are for draw stacks:
 	self.drawUnder = false
 	self.updateUnder = false
+	math.randomseed(os.time())
 
 	--music
 	-- self.startMusic = love.audio.newSource("music/startScreen.mp3") 
@@ -36,10 +39,12 @@ function Game:_init()
 	self.SCREENHEIGHT = 1200
 	self.fullscreen = true
 	self.drawFPS = false
+	self.playerLimit = 2
 
 	self.inputManager = InputManager(self)
 
 	self.mainMenu = MainMenu(self)
+	self.winMenu = WinMenu(self)
 	self.gameplay = Gameplay(self)
 
 	self.screenStack = {}
@@ -49,7 +54,11 @@ function Game:_init()
 	-- self:addToScreenStack(self.gameplay)
 	-- self.fullCanvas = love.graphics.newCanvas(self.SCREENWIDTH, self.SCREENHEIGHT)
 
-	self.cheatMode = false
+	self.pvpOn = false
+	self.screenShake = true -- on by default makes sense
+	self.largeScreenShake = false
+	self.debug = false
+	self.negativeLoadingin = false
 end
 
 function Game:load(args)

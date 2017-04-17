@@ -13,13 +13,27 @@ function InputManager:_init(game)
 
 	self.deadzone = .2 -- whether or not to ignore it when checking if the action is down
 	self.keyboardInputMap = {w = "up", a = "left", s = "down", d = "right", i = "up", j = "left", k="down", l="right",
-								z = "shoot", b = "shoot"}
+								z = "shootleft", b = "shootleft", x = "shootdown", c = "shootright",
+								n = "shootdown", m = "shootright"}
 	self.keyboardInputMap["5"] = "start"
 	self.keyboardInputMap["6"] = "start"
-	self.keyboardPlayerMap = {w = 1, a = 1, s = 1, d = 1, z = 1,
-								i = 2, j = 2, k = 2, l = 2, b = 2}
+
+	self.keyboardInputMap["1"] = "shoot"
+	self.keyboardInputMap["7"] = "shoot"
+	self.keyboardInputMap["2"] = "shootup"
+	self.keyboardInputMap["8"] = "shootup"
+	self.keyboardInputMap["3"] = "shoot"
+	self.keyboardInputMap["9"] = "shoot"
+	self.keyboardPlayerMap = {w = 1, a = 1, s = 1, d = 1, z = 1, x = 1, c = 1,
+								i = 2, j = 2, k = 2, l = 2, b = 2, n = 2, m = 2}
 	self.keyboardPlayerMap["5"] = 1
 	self.keyboardPlayerMap["6"] = 2
+	self.keyboardPlayerMap["1"] = 1
+	self.keyboardPlayerMap["2"] = 1
+	self.keyboardPlayerMap["3"] = 1
+	self.keyboardPlayerMap["7"] = 2
+	self.keyboardPlayerMap["8"] = 2
+	self.keyboardPlayerMap["9"] = 2
 	self.joystickInputMap = {axis = {}, button = {}}
 
 	self.inputs = {{}, {}, {}, {}}
@@ -31,6 +45,12 @@ function InputManager:_init(game)
 		v.shoot = 0
 		v.throw = 0 -- grenades, because why not
 		v.start = 0
+		v.shootup = 0
+		v.shootdown = 0
+		v.shootleft = 0
+		v.shootright = 0
+		v.numshootbuttons = 0 -- this is a meta button thing
+		v.numthrowbuttons = 0 -- this is a meta button thing
 	end
 
 	self.leftflickup = false
@@ -98,16 +118,34 @@ end
 function InputManager:keypressed(key, unicode)
 	local player = self.keyboardPlayerMap[key]
 	if player ~= nil then
+		-- print(key)
+		-- print(self.keyboardInputMap[key])
 		self.inputs[player][self.keyboardInputMap[key]] = 1
+		if self.keyboardInputMap[key] == "shootleft" or self.keyboardInputMap[key] == "shootright" or self.keyboardInputMap[key]
+				== "shootup" or self.keyboardInputMap[key] == "shootdown" or self.keyboardInputMap[key] == "shoot" then
+			self.inputs[player].shoot = 1
+			self.inputs[player].numshootbuttons = self.inputs[player].numshootbuttons + 1
+		end
 	end
 	love.mouse.setVisible(false)
+	-- print("pressed "..key)
 end
 
 function InputManager:keyreleased(key, unicode)
 	local player = self.keyboardPlayerMap[key]
 	if player ~= nil then
 		self.inputs[player][self.keyboardInputMap[key]] = 0
+		if self.keyboardInputMap[key] == "shootleft" or self.keyboardInputMap[key] == "shootright" or self.keyboardInputMap[key]
+				== "shootup" or self.keyboardInputMap[key] == "shootdown" or self.keyboardInputMap[key] == "shoot" then
+			self.inputs[player].numshootbuttons = self.inputs[player].numshootbuttons - 1
+			if self.inputs[player].numshootbuttons == 0 then
+				self.inputs[player].shoot = 0
+			else
+				self.inputs[player].shoot = 1
+			end
+		end
 	end
+	-- print("released "..key)
 end
 
 function InputManager:isDown(player, action)
