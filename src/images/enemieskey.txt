@@ -26,16 +26,16 @@ ballRight
 switch
 dead
 ballDying
-1
-8
-1
+.075
+18
+3
 
 -- for dead it'll be invisible anyways, so it shouldn't matter
 -- currently I'm just having everything go to this one death, because why not...
 new
 balldead
 1
-8
+20
 1
 
 
@@ -61,14 +61,14 @@ crawlerRight
 switch
 dead
 crawlerDying
-1
-0
-1
+.1
+5
+3
 
 new
 crawlerdead
 1
-0
+7
 1
 
 
@@ -92,14 +92,14 @@ spitterSpit
 switch
 dead
 spitterDying
-1
-24
-1
+.1
+34
+3
 
 new
 spitterdead
 1
-24
+36
 1
 
 

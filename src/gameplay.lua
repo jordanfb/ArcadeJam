@@ -7,7 +7,6 @@ Gameplay = class()
 
 function Gameplay:_init(game)
 	self.storeAllCanvases = true -- a performance setting which I may or may not ignore...
-	self.defaltControlScheme = "onebutton" -- onebutton, arrow
 
 	self.game = game
 	self.inputManager = self.game.inputManager
@@ -22,7 +21,8 @@ function Gameplay:_init(game)
 	self.playersInGame = {}
 
 	self:loadEnemyGraphics()
-	self.level = Level(game, self, self.playersInGame, self.enemyGraphics)
+	self:loadBloodstainsGraphics()
+	self.level = Level(game, self, self.playersInGame, self.enemyGraphics, self.bloodstainsGraphics)
 
 	self.singleCanvas = love.graphics.newCanvas(self.game.SCREENWIDTH, self.game.SCREENHEIGHT)
 	self.doubleCanvas = {love.graphics.newCanvas(self.game.SCREENWIDTH/2, self.game.SCREENHEIGHT),
@@ -65,6 +65,17 @@ function Gameplay:startWholeGameScreenshake(time, intensity, falloff, oneframe)
 	self.wholeScreenshakeOneframe = oneframe
 end
 
+function Gameplay:loadBloodstainsGraphics()
+	self.bloodstainsImageFilename = "bloodstains"
+	self.bloodstainsGraphics = {}
+	self.bloodstainsGraphics.animations = {}
+	self.bloodstainsGraphics.animationDetails = {}
+	self.bloodstainsGraphics.image = love.graphics.newImage("images/"..self.bloodstainsImageFilename..".png")
+	self.players[1]:loadImages(self.bloodstainsGraphics.image, self.bloodstainsImageFilename, self.bloodstainsGraphics.animations, self.bloodstainsGraphics.animationDetails)
+	self.bloodstainsGraphics.animationDetails.imageWidth = self.bloodstainsGraphics.image:getWidth()/8
+	self.bloodstainsGraphics.animationDetails.imageHeight = self.bloodstainsGraphics.image:getHeight()/6
+end
+
 function Gameplay:loadBulletGraphics()
 	self.bulletImageFilename = "bulletanimations"
 	self.bulletGraphics = {}
@@ -87,36 +98,40 @@ function Gameplay:loadEnemyGraphics()
 	self.enemyGraphics.animationDetails.imageHeight = self.enemyGraphics.image:getHeight()/6
 end
 
-function Gameplay:createBullet(x, y, dx, dy, speed, originPlayernum, color, useplant, randomize)
-	self.level:createBullet(x, y, dx, dy, speed, originPlayernum, self.players, self.playersInGame, self.bulletGraphics, color, useplant, randomize)
+function Gameplay:createBullet(parameters)--x, y, dx, dy, speed, originPlayernum, color, useplant, randomize)
+	parameters.playerList = self.players
+	parameters.allPlayers = self.playersInGame
+	parameters.graphics = self.bulletGraphics
+	self.level:createBullet(parameters)--x, y, dx, dy, speed, originPlayernum, self.players, self.playersInGame, self.bulletGraphics, color, useplant, randomize)
 end
 
 function Gameplay:addPlayerToGame(playernumber)
 	-- set the player's location in the level (at a spawn point)
 	local spawnPlace = self.level.playerspawns[math.random(1, #self.level.playerspawns)]
-	self.players[playernumber].x = spawnPlace[1]
-	self.players[playernumber].y = spawnPlace[2]
-	local color = {math.random(100, 200), math.random(100, 200), math.random(100, 200), 255}
-	self.players[playernumber].color = color
-	local helmetColor = {color[1], color[2], color[3], 255}
-	local toChange = math.random(1, 3)
-	helmetColor[toChange] = math.max(helmetColor[toChange] + math.random(20, 100), 255)
+	local colorOptions = {200, 255}
+	local helmetOptions = {255, 100}
+	-- local color = {math.random(150, 200), math.random(150, 200), math.random(150, 200), 255}
+	local color = {200, 200, 200}--colorOptions[math.random(1, 2)], colorOptions[math.random(1, 2)], colorOptions[math.random(1, 2)], 255}
+	color[math.random(1, 3)] = 255
+	color[math.random(1, 3)] = 255
+	-- local helmetColor = {color[1], color[2], color[3], 255}
+	local helmetColor = {helmetOptions[math.random(1, 2)], helmetOptions[math.random(1, 2)], helmetOptions[math.random(1, 2)], 255}
+	-- local toChange = math.random(1, 3)
+	-- helmetColor[toChange] = math.max(helmetColor[toChange] + math.random(20, 100), 255)
+	for i = 1, 3 do
+		helmetColor[i] = color[i]
+		if color[i] == 200 then
+			helmetColor[i] = 100
+		end
+	end
+	color[4] = 255
+	helmetColor[4] = 255
 	-- local toChange = math.random(1, 3)
 	-- helmetColor[toChange] = math.max(helmetColor[toChange] + math.random(20, 100), 255)
 	-- helmetColor[1] = math.max(helmetColor[1] + math.random(0, 100), 255)
 	-- helmetColor[2] = math.max(helmetColor[2] + math.random(0, 100), 255)
 	-- helmetColor[3] = math.max(helmetColor[3] + math.random(0, 100), 255)
-	self.players[playernumber].helmetColor = helmetColor
-	self.players[playernumber].health = 100
-	self.players[playernumber].dead = false
-	self.players[playernumber].loadingin = true
-	self.players[playernumber]:randomizeLoadingin()
-	self.players[playernumber].animationState = "steady"
-	self.players[playernumber].animationFrame = 1
-	self.players[playernumber].gunAnimationFrame = 1
-	self.players[playernumber].kills = 0
-	self.players[playernumber].points = 0
-	self.players[playernumber].controlScheme = self.defaltControlScheme
+	self.players[playernumber]:resetPlayer(spawnPlace, color, helmetColor)
 	-- then add the player to the list of players playing
 	for i, p in ipairs(self.playersInGame) do
 		if p.playerNumber == playernumber then
@@ -168,13 +183,14 @@ function Gameplay:drawForPlayer(screenNum, screenWidth, screenHeight)
 
 	love.graphics.setColor(255, 255, 255)
 
-	self.level:drawbase(x, y, 100, 100)
-	self.level:drawBullets(x, y, 100, 100)
-	self.level:drawEnemies(x, y, 100, 100)
+	self.level:drawbase(x, y, screenWidth, screenHeight)
+	self.level:drawBloodstains(x, y, screenWidth, screenHeight)
+	self.level:drawEnemies(x, y, screenWidth, screenHeight)
 	for i, player in ipairs(self.playersInGame) do
-		player:draw(x, y)
+		player:draw(x, y, screenWidth, screenHeight, p.playerNumber)
 	end
-	self.level:drawtop(x, y, 100, 100)
+	self.level:drawBullets(x, y, screenWidth, screenHeight)
+	self.level:drawtop(x, y, screenWidth, screenHeight)
 end
 
 function Gameplay:drawPlayerIndicators()
@@ -331,7 +347,7 @@ function Gameplay:keypressed(key, unicode)
 	-- now add the player if it's another one of their keys
 	if self.inputManager.keyboardPlayerMap[key] ~= nil then
 		if not self.playersPlaying[self.inputManager.keyboardPlayerMap[key]] then
-			self.playersPlaying[2] = true
+			self.playersPlaying[self.inputManager.keyboardPlayerMap[key]] = true
 			self:addPlayerToGame(self.inputManager.keyboardPlayerMap[key])
 		end
 	end
@@ -387,6 +403,8 @@ function Gameplay:setCheat(code, playernumber)
 	elseif code == "ghost" then
 		self.players[playernumber].color[4] = 50
 		self.players[playernumber].helmetColor[4] = 50
+	elseif code == "gruesome" then
+		self.game.gruesomeOn = not self.game.gruesomeOn
 	end
 end
 

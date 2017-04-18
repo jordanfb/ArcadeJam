@@ -13,7 +13,7 @@ stuff slightly later.
 I'll probably do a single text file with two characters per tile? That way I can store more things which is a yay!
 ]]--
 
-function Level:_init(game, gameplay, playersInGame, enemyGraphics)
+function Level:_init(game, gameplay, playersInGame, enemyGraphics, bloodstainsGraphics)
 	self.game = game
 	self.gameplay = gameplay
 
@@ -25,6 +25,8 @@ function Level:_init(game, gameplay, playersInGame, enemyGraphics)
 	self.tileHeight = 32*self.tileScale
 	self.playerlist = playersInGame
 	self.enemyGraphics = enemyGraphics
+	self.bloodstainsGraphics = bloodstainsGraphics
+	self.playTime = 0
 	
 	self:reloadLevel()
 	self:loadTileset(self.tilesetFilename)
@@ -75,12 +77,15 @@ function Level:resetLevel()
 	self.killed = 0
 	self.levelWidth = -1
 	self.levelHeight = -1
+	self.playTime = 0
 	-- self.levelbase = {} -- what gets drawn below everything?
 	-- self.leveltop = {} -- what gets drawn above everything? maybe not happening, but still... doors, railings? lights?
 	-- you probably can't collide with anything in leveltop, just levelbase.
 	self.bullets = {}
 	self.enemies = {}
 	self.numberOfEnemies = 0
+	self.bloodstainsOffset = math.random(0, 16)
+	self.bloodstains = {}
 	-- self.blemishes = {} -- the marks made by bullets
 end
 
@@ -127,13 +132,6 @@ function Level:loadLevelFromFile(filename)
 		end
 		y = y + 1
 	end
-end
-
-function Level:sign(num)
-	if num == 0 then
-		return 1
-	end
-	return num/math.abs(num)
 end
 
 function Level:checkBothCollisions(x, y, dx, dy, width, height)
@@ -243,8 +241,6 @@ function Level:collisionDetection(x, y, dx, dy)
 	end
 	if tilex ~= tile2x then
 		-- then check whether you can move into that tile
-		-- print(self:sign(dx)..", "..tile2y)
-		-- print(#self.levelbase[tile2y+1])
 		if self.levelbase[tile2y+1] == nil or self.levelbase[tile2y+1][tile2x+1] == nil then
 			return {false, 0}
 		end
@@ -289,10 +285,17 @@ function Level:drawEnemies(focusX, focusY, focusWidth, focusHeight)
 	end
 end
 
-function Level:drawBlemishes(focusX, focusY, focusWidth, focusHeight)
-	love.graphics.setColor(50, 50, 50)
-	for i, v in ipairs(self.blemishes) do
-		love.graphics.ellipse("fill", v[1]-focusX, v[2]-focusY, 5, 5)
+function Level:drawBloodstains(focusX, focusY, focusWidth, focusHeight)
+	-- love.graphics.setColor(50, 50, 50)
+	local bloodType = self.bloodstainsOffset
+	for i, v in ipairs(self.bloodstains) do
+		if self.game.gruesomeOn then
+			love.graphics.setColor(60, 22, 22, 100)
+		else
+			love.graphics.setColor(v[3][1], v[3][2], v[3][3], 100)
+		end
+		love.graphics.draw(self.bloodstainsGraphics.image, self.bloodstainsGraphics.animations.all[((bloodType+1) % #self.bloodstainsGraphics.animations.all)+1], v[1]-focusX, v[2]-focusY, 0, 1, 1, 32*4/2, 32*4/2)
+		bloodType = bloodType + 1
 	end
 end
 
@@ -309,18 +312,24 @@ function Level:drawbase(focusX, focusY, focusWidth, focusHeight)
 	end
 end
 
-function Level:createBullet(x, y, dx, dy, speed, originPlayernum, allPlayers, playerlist, graphics, color, useplant, randomize)
-	table.insert(self.bullets, Bullet(self.game, self, x, y, dx, dy, speed, originPlayernum, allPlayers, playerlist, self.enemies, graphics, color, useplant, randomize))
+function Level:createBullet(parameters)--x, y, dx, dy, speed, originPlayernum, allPlayers, playerlist, graphics, color, useplant, randomize)
+	parameters.game = self.game
+	parameters.level = self
+	parameters.enemylist = self.enemies
+	table.insert(self.bullets, Bullet(parameters))--Bullet(self.game, self, x, y, dx, dy, speed, originPlayernum, allPlayers, playerlist, self.enemies, graphics, color, useplant, randomize))
 end
 
 function Level:drawtop(focusX, focusY, focusWidth, focusHeight)
 	-- only draw the parts that it actually may need to, because why not, right?
-	-- for y = 0, #self.leveltop-1 do
-	-- 	for x = 0, #self.leveltop[1]-1 do
-	-- 		-- print(self.leveltop[y+1][x+1])
-	-- 		love.graphics.draw(self.tilesetImage, self.tilesetQuads[self.leveltop[y+1][x+1]], x*self.tileWidth-focusX, y*self.tileHeight-focusY, 0)
-	-- 	end
-	-- end
+	love.graphics.setColor(255, 255, 255, 255)
+	for y = 0, #self.leveltop-1 do
+		for x = 0, #self.leveltop[1]-1 do
+			-- print(self.leveltop[y+1][x+1])
+			if self.leveltop[y+1][x+1] ~= " " then
+				love.graphics.draw(self.tilesetImage, self.tilesetQuads[self.leveltop[y+1][x+1]], x*self.tileWidth-focusX, y*self.tileHeight-focusY, 0)
+			end
+		end
+	end
 
 	-- then debug for collisions
 	if self.game.debug then
@@ -335,6 +344,7 @@ function Level:drawtop(focusX, focusY, focusWidth, focusHeight)
 end
 
 function Level:update(dt)
+	self.playTime = self.playTime + dt
 	for i, v in ipairs(self.bullets) do
 		v:update(dt)
 		if v.animationState == "dead" then
@@ -346,10 +356,12 @@ function Level:update(dt)
 	for i, v in ipairs(self.enemies) do
 		v:update(dt, self.gameplay.playersInGame)
 		if v.animationState == "dead" then
-			v:onDeath()
-			table.remove(self.enemies, i)
-			self.numberOfEnemies = self.numberOfEnemies - 1
-			-- table.insert(self.blemishes, {v.x, v.y})
+			if not v.dead then
+				self.numberOfEnemies = self.numberOfEnemies - 1
+				-- table.insert(self.bloodstains, {v.x, v.y, v.color})
+				v:onDeath()
+			end
+			-- table.remove(self.enemies, i)
 		end
 	end
 	if self.numberOfEnemies == 0 then

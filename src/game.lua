@@ -19,12 +19,31 @@ Game = class()
 
 -- _init, load, draw, update(dt), keypressed, keyreleased, mousepressed, mousereleased, resize, (drawUnder, updateUnder)
 
+--[[
+123456 = screenshake
+142536 = MEGA SCREENSHAKE!
+153426 = debug
+122333 = pvp
+124563 = controls
+145666 = spawn in from both directions
+166666 = original colors
+142666 = ghost
+145632 = gruesome
+]]--
+
 function Game:_init()
+	-- settings:
+	self.arcadeCabinet = true
+
+	self.pvpOn = false
+	self.screenShake = true -- on by default makes sense
+	self.largeScreenShake = false
+	self.debug = false
+	self.negativeLoadingin = false
+	self.gruesomeOn = true
+
+
 	-- these are for draw stacks:
-	self.arcadeCabinet = false
-
-
-	
 	self.drawUnder = false
 	self.updateUnder = false
 	math.randomseed(os.time())
@@ -42,7 +61,6 @@ function Game:_init()
 	self.SCREENWIDTH = 1920
 	self.SCREENHEIGHT = 1200
 	self.fullscreen = true
-	self.drawFPS = false
 	self.playerLimit = 2
 
 	self.inputManager = InputManager(self)
@@ -57,12 +75,6 @@ function Game:_init()
 	self:addToScreenStack(self.mainMenu)
 	-- self:addToScreenStack(self.gameplay)
 	-- self.fullCanvas = love.graphics.newCanvas(self.SCREENWIDTH, self.SCREENHEIGHT)
-
-	self.pvpOn = false
-	self.screenShake = true -- on by default makes sense
-	self.largeScreenShake = false
-	self.debug = false
-	self.negativeLoadingin = false
 end
 
 function Game:load(args)
@@ -92,7 +104,7 @@ function Game:draw()
 
 	-- love.graphics.setCanvas()
 	-- love.graphics.setColor(255, 255, 255)
-	if self.drawFPS then
+	if self.debug then
 		love.graphics.setColor(255, 0, 0)
 		love.graphics.print("FPS: "..love.timer.getFPS(), 10, love.graphics.getHeight()-45)
 		love.graphics.setColor(255, 255, 255)

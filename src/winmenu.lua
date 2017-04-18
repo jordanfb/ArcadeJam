@@ -31,7 +31,7 @@ function WinMenu:leave()
 end
 
 function WinMenu:draw()
-	local text = "Congratulations! You did it!\nPress any button to return to the main menu"
+	local text = "Congratulations! You did it!\nPress a button to return to the main menu"
 	love.graphics.printf(text, 0, love.graphics.getHeight()/4, love.graphics.getWidth(), "center")
 end
 
@@ -44,6 +44,10 @@ function WinMenu:resize(w, h)
 end
 
 function WinMenu:keypressed(key, unicode)
+	if self.game.arcadeCabinet and (key == "w" or key == "a" or key == "s" or key == "d" or key == "i" or
+						key == "j" or key == "k" or key == "l") then
+		return
+	end
 	self.game:popScreenStack()
 end
 

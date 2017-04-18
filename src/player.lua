@@ -4,6 +4,7 @@ require "class"
 Player = class()
 
 function Player:_init(game, gameplay, playerNumber)
+	self.defaultControlScheme = "onebutton" -- onebutton, arrow
 	self.baseImageFilename = "baseplayer"
 	self.helmetImageFilename = "helmetimage"
 	self.gunImageFilename = "gunanimations"
@@ -74,11 +75,28 @@ function Player:_init(game, gameplay, playerNumber)
 	self:getGunTipLocation()
 end
 
+function Player:resetPlayer(spawnplace, color, helmetColor)
+	self.color = color
+	self.helmetColor = helmetColor
+	self.x = spawnplace[1]
+	self.y = spawnplace[2]
+	self.health = 100
+	self.dead = false
+	self.loadingin = true
+	self:randomizeLoadingin()
+	self.animationState = "steady"
+	self.animationFrame = 1
+	self.gunAnimationFrame = 1
+	self.kills = 0
+	self.points = 0
+	self.controlScheme = self.defaultControlScheme
+end
+
 function Player:randomizeLoadingin()
 	self.loadinginSettings = {}
-	self.loadinginSettings.timer = .5
+	self.loadinginSettings.timer = 1
 	for i = 1, 19 do
-		local speed = math.random(10, 20)*200
+		local speed = math.random(10, 20)*175
 		if self.game.negativeLoadingin and math.random(0, 1) == 0 then
 			speed = -speed
 		end
@@ -180,7 +198,12 @@ function Player:makeQuads(t, start, length, imageWidth, imageHeight)
 	end
 end
 
-function Player:draw(x, y)
+function Player:dealDamage(dmg, level)
+	self.health = math.max(self.health-dmg, 0)
+	table.insert(level.bloodstains, {self.x, self.y+self.tileWidth/2, self.color})
+end
+
+function Player:draw(x, y, viewWidth, viewHeight, screenOwner) -- screenOwner is the playerNumber of the focus of the screen
 	if self.dead then
 		return
 	end
@@ -287,7 +310,7 @@ function Player:handleMovement(dx, dy, dt)
 	self.y = move[2]
 end
 
-function Player:sign(num)
+function Player:signOrZero(num)
 	if num == 0 then
 		return 0
 	else
@@ -325,9 +348,9 @@ function Player:update(dt)
 			if self.inputManager:isDown(self.playerNumber, "shoot") then
 				self.gunAnimationState = "firing"
 				if self.shootTimer <= 0 then
-					self.gameplay:createBullet(self.x+self.gunTipLocation[1], self.y+self.gunTipLocation[2], self.fx, self.fy, 1000, self.playerNumber, self.color, false, true)
+					self.gameplay:createBullet{x = self.x+self.gunTipLocation[1], y = self.y+self.gunTipLocation[2], dx = self.fx, dy = self.fy, speed = 1000, originPlayernum = self.playerNumber, color = self.color, bulletType = "player", randomize = true}
 					self.shootTimer = self.shootDelay
-					self:handleMovement(-self:sign(self.fx)*self.knockback, -self:sign(self.fy)*self.knockback, dt)
+					self:handleMovement(-self:signOrZero(self.fx)*self.knockback, -self:signOrZero(self.fy)*self.knockback, dt)
 				end
 				self.speed = self.maxSpeed/2
 			else
@@ -358,9 +381,9 @@ function Player:update(dt)
 						self.inputManager:isDown(self.playerNumber, "shootup") then
 				self.gunAnimationState = "firing"
 				if self.shootTimer <= 0 then
-					self.gameplay:createBullet(self.x+self.gunTipLocation[1], self.y+self.gunTipLocation[2], self.fx, self.fy, 1000, self.playerNumber, self.color, false, true)
+					self.gameplay:createBullet{x = self.x+self.gunTipLocation[1], y = self.y+self.gunTipLocation[2], dx = self.fx, dy = self.fy, speed = 1000, originPlayernum = self.playerNumber, color = self.color, bulletType = "player", randomize = true}
 					self.shootTimer = self.shootDelay
-					self:handleMovement(-self:sign(self.fx)*self.knockback, -self:sign(self.fy)*self.knockback, dt)
+					self:handleMovement(-self:signOrZero(self.fx)*self.knockback, -self:signOrZero(self.fy)*self.knockback, dt)
 				end
 				self.speed = self.maxSpeed/2
 			else
