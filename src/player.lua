@@ -3,7 +3,8 @@ require "class"
 
 Player = class()
 
-function Player:_init(game, gameplay, playerNumber)
+function Player:_init(game, gameplay, playerNumber, soundManager)
+	self.soundManager = soundManager
 	self.defaultControlScheme = "onebutton" -- onebutton, arrow
 	self.baseImageFilename = "baseplayer"
 	self.helmetImageFilename = "helmetimage"
@@ -201,6 +202,7 @@ end
 function Player:dealDamage(dmg, level)
 	self.health = math.max(self.health-dmg, 0)
 	table.insert(level.bloodstains, {self.x, self.y+self.tileWidth/2, self.color})
+	self.soundManager:playSound("player_damaged")
 end
 
 function Player:draw(x, y, viewWidth, viewHeight, screenOwner) -- screenOwner is the playerNumber of the focus of the screen
@@ -320,9 +322,12 @@ end
 
 function Player:update(dt)
 	if self.health <= 0 then
-		self.animationState = "dying"
-		self.health = 0
-		self.dead = true
+		if not self.dead then
+			self.animationState = "dying"
+			self.health = 0
+			self.dead = true
+			self.soundManager:playSound("player_killed")
+		end
 	end
 	if self.dead then
 		return
@@ -349,6 +354,7 @@ function Player:update(dt)
 				self.gunAnimationState = "firing"
 				if self.shootTimer <= 0 then
 					self.gameplay:createBullet{x = self.x+self.gunTipLocation[1], y = self.y+self.gunTipLocation[2], dx = self.fx, dy = self.fy, speed = 1000, originPlayernum = self.playerNumber, color = self.color, bulletType = "player", randomize = true}
+					self.soundManager:playSound("player_bullet_fired")
 					self.shootTimer = self.shootDelay
 					self:handleMovement(-self:signOrZero(self.fx)*self.knockback, -self:signOrZero(self.fy)*self.knockback, dt)
 				end

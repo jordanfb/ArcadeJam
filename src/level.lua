@@ -13,7 +13,8 @@ stuff slightly later.
 I'll probably do a single text file with two characters per tile? That way I can store more things which is a yay!
 ]]--
 
-function Level:_init(game, gameplay, playersInGame, enemyGraphics, bloodstainsGraphics)
+function Level:_init(game, gameplay, playersInGame, enemyGraphics, bloodstainsGraphics, soundManager)
+	self.soundManager = soundManager
 	self.game = game
 	self.gameplay = gameplay
 
@@ -270,7 +271,7 @@ function Level:collisionDetection(x, y, dx, dy)
 end
 
 function Level:makeEnemy(type, x, y)
-	table.insert(self.enemies, Enemy(type, x, y, self.playerlist, self.gameplay, self, self.enemyGraphics))
+	table.insert(self.enemies, Enemy(type, x, y, self.playerlist, self.gameplay, self, self.enemyGraphics, self.soundManager))
 end
 
 function Level:drawBullets(focusX, focusY, focusWidth, focusHeight)
@@ -316,6 +317,7 @@ function Level:createBullet(parameters)--x, y, dx, dy, speed, originPlayernum, a
 	parameters.game = self.game
 	parameters.level = self
 	parameters.enemylist = self.enemies
+	parameters.soundManager = self.soundManager
 	table.insert(self.bullets, Bullet(parameters))--Bullet(self.game, self, x, y, dx, dy, speed, originPlayernum, allPlayers, playerlist, self.enemies, graphics, color, useplant, randomize))
 end
 
@@ -365,7 +367,9 @@ function Level:update(dt)
 		end
 	end
 	if self.numberOfEnemies == 0 then
+		self.gameplay:resetGameplay()
 		self.game:popScreenStack()
+		self.soundManager:playSound("on_win")
 		self.game:addToScreenStack(self.game.winMenu)
 		return
 	end

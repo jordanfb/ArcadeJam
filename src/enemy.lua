@@ -5,7 +5,8 @@ require "utility"
 Enemy = class()
 
 
-function Enemy:_init(type, x, y, playersInGame, gameplay, level, graphics)
+function Enemy:_init(type, x, y, playersInGame, gameplay, level, graphics, soundManager)
+	self.soundManager = soundManager
 	self.gameplay = gameplay
 	self.players = playersInGame
 	self.level = level
@@ -85,6 +86,8 @@ function Enemy:dealDamage(dmg, level)
 		table.insert(level.bloodstains, {self.x, self.y, self.color})
 	end
 	self.health = math.max(self.health-dmg, 0)
+	self.soundManager:playSound(self.type.."_damaged")
+	self.soundManager:playSound("enemy_damaged")
 end
 
 function Enemy:update(dt, playersInGame)
@@ -96,6 +99,7 @@ function Enemy:update(dt, playersInGame)
 			-- fire a bullet
 			self.shootTimer = self.shootTime+math.random(-1, 1)
 			self.gameplay:createBullet{x = self.x, y = self.y, dx = math.cos(self.angle), dy = math.sin(self.angle), speed = self.shootSpeed, color = self.color, bulletType = "enemy"}
+			self.soundManager:playSound("enemy_bullet_fired")
 			-- self.gameplay:createBullet(self.x, self.y, math.cos(self.angle), math.sin(self.angle), self.shootSpeed, -1, self.color, true, false)
 		end
 		self.oldAnimationState = self.animationState
@@ -137,6 +141,7 @@ function Enemy:update(dt, playersInGame)
 		elseif self.type == "ball" then
 			if self.collided then
 				self.dx = -self.dx
+				self.soundManager:playSound("ball_change_direction")
 			end
 		end
 	else
@@ -177,6 +182,8 @@ end
 
 function Enemy:onDeath()
 	self.dead = true
+	self.soundManager:playSound(self.type.."_killed")
+	self.soundManager:playSound("enemy_killed")
 end
 
 function Enemy:handleMovement(dx, dy, dt)

@@ -33,7 +33,7 @@ Game = class()
 
 function Game:_init()
 	-- settings:
-	self.arcadeCabinet = true
+	self.arcadeCabinet = false
 
 	self.pvpOn = false
 	self.screenShake = true -- on by default makes sense

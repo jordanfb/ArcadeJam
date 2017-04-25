@@ -6,6 +6,7 @@ Bullet = class()
 
 function Bullet:_init(data) --game, level, x, y, dx, dy, speed, originPlayernum, allPlayers, playerList, enemylist, graphics, color, useplant, randomize)
 	self.randomize = data.randomize or false
+	self.soundManager = data.soundManager
 	self.game = data.game
 	self.level = data.level
 	self.color = data.color or {255, 255, 255}
@@ -63,6 +64,11 @@ function Bullet:hitSomething(explode, makeblood)
 			self.game.gameplay:startWholeGameScreenshake(.1, 5, 1, false)
 		else
 			self.game.gameplay:startWholeGameScreenshake(1, 2, 1, true)
+		end
+		if not makeblood and self.bulletType == "player" then
+			self.soundManager:playSound("player_bullet_hit_wall")
+		elseif not makeblood and self.bulletType == "enemy" then
+			self.soundManager:playSound("enemy_bullet_hit_wall")
 		end
 	end
 	if explode then
