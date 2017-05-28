@@ -32,10 +32,12 @@ end
 function MainMenu:load()
 	-- run when the level is given control
 	love.graphics.setFont(love.graphics.newFont(36))
+	self.game.soundManager:playSound("start_menu_music")	
 end
 
 function MainMenu:leave()
 	-- run when the level no longer has control
+	self.game.soundManager:stopSound("start_menu_music")
 end
 
 function MainMenu:draw()
@@ -55,13 +57,13 @@ function MainMenu:keypressed(key, unicode)
 	if self.requireStartButton then
 		if self.startButtons[key] ~= nil then
 			self.game.gameplay:setPlayersPlaying({self.startButtons[key]})
-			self.game.gameplay.level:reloadLevel()
+			-- self.game.gameplay.level:reloadLevel() -- currently it reloads the level when you leave the gameplay screen
 			self.game:addToScreenStack(self.game.gameplay)
 		end
 	else
 		if self.buttons[key] ~= nil then
 			self.game.gameplay:setPlayersPlaying({self.buttons[key]})
-			self.game.gameplay.level:reloadLevel()
+			-- self.game.gameplay.level:reloadLevel()
 			self.game:addToScreenStack(self.game.gameplay)
 		end
 	end

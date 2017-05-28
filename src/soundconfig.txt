@@ -1,0 +1,108 @@
+// these are comments
+// 
+
+// soundName
+// fileLocation
+// soundCount to load
+// looping = boolean
+// pitch shifting amount (.5 = up to an octave)
+// volume
+
+// game sounds:
+// startup_music -- when the game loads. For the fun of it
+// background_music -- probably want to make this looping
+// start_menu_music -- stopped when you leave the start menu
+// gameplay_music
+// on_win -- plays when everything is killed
+
+
+// hurting sounds:
+// ball_damaged // these are the rolly polly thing
+// spitter_damaged // these are the things that shoot at you
+// crawler_damaged // these are the horizontal zombie things
+// enemy_damaged // this runs at the same time as the above three if you don't want to record a specific one
+// ball_killed
+// spitter_killed
+// crawler_killed
+// enemy_killed // this runs at the same time as the above three if you don't want to record a specific one
+
+
+// player sounds:
+// player_damaged
+// player_killed
+// player_joined_game
+
+
+// bullet sounds:
+// enemy_bullet_hit_wall
+// player_bullet_hit_wall
+// enemy_bullet_fired
+// player_bullet_fired
+
+
+// enemy sounds:
+// ball_change_direction
+
+player_bullet_fired
+sounds/bulletfire.wav
+//sounds/maybegunfiring.wav
+50
+false
+.05
+.25
+
+enemy_killed
+sounds/enemykilled.wav
+4
+false
+.1
+1
+
+enemy_bullet_fired
+sounds/enemyfire.wav
+20
+false
+0
+.5
+
+//player_multiplier_up
+//sounds/gateCollect.mp3
+//4
+//false
+//.1
+//1
+
+player_multiplier_down
+sounds/levelDownBetter.wav
+4
+false
+0
+1
+
+player_multiplier_lost
+sounds/multiplierLost.wav
+4
+false
+0
+1
+
+
+//https://www.dl-sounds.com/royalty-free/galaxy-runner/
+//https://www.dl-sounds.com/royalty-free/zapper-16-bit/
+//https://www.dl-sounds.com/royalty-free/intro-screen/
+//https://www.dl-sounds.com/royalty-free/loading-loop/
+//https://www.dl-sounds.com/royalty-free/defense-line/
+gameplay_music
+//sounds/Loading Loop.wav
+sounds/Defense Line.mp3
+1
+true
+0
+.5
+
+start_menu_music
+sounds/Intro Screen.mp3
+1
+true
+0
+.5

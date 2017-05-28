@@ -24,6 +24,7 @@ end
 function WinMenu:load()
 	-- run when the level is given control
 	love.graphics.setFont(love.graphics.newFont(36))
+	self.game.lightsManager:setLights({90, 255, 255}, 5)
 end
 
 function WinMenu:leave()

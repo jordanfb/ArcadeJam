@@ -13,8 +13,13 @@ function Player:_init(game, gameplay, playerNumber, soundManager)
 	self.tileWidth = 32*4 -- these have to be for all player images for functions to work!
 	self.tileHeight = 32*4
 	self.maxSpeed = 300
+	if game.superspeed then
+		self.maxSpeed = 300*3
+	end
 	self.shootDelay = .1
 	self.knockback = 250
+	self.maxScoreMultiplierFaderTime = 5
+	self.scoreMultiplierFaderTime = self.maxScoreMultiplierFaderTime
 
 	self.game = game
 	self.gameplay = gameplay
@@ -48,17 +53,6 @@ function Player:_init(game, gameplay, playerNumber, soundManager)
 	self.dx = 0
 	self.dy = 0
 	self.speed = self.maxSpeed
-	self.shootTimer = 0
-
-	self.kills = 0
-	self.points = 0
-
-	self.fx = 1 -- the facing directions
-	self.fy = 0 -- if fy < 0 then the gun should draw first
-
-	self.health = 100
-	self.dead = false
-	self.loadingin = true -- the animation for joining the game
 
 	self.animationState = ""
 	self.animationTime = 0
@@ -68,29 +62,37 @@ function Player:_init(game, gameplay, playerNumber, soundManager)
 	self.gunAnimationTime = 0
 	self.gunAnimationFrame = 1
 
-	self.gunTipLocation = {0, 0}
-	self.color = {255, 255, 255, 255}
-	self.helmetColor = {255, 255, 255, 255}
+	self:resetPlayer({-100, -100}, {255, 255, 255, 255}, {255, 255, 255, 255})
 	self.controlScheme = "onebutton" -- this gets overwritten to the default value in gameplay
-
-	self:getGunTipLocation()
 end
 
 function Player:resetPlayer(spawnplace, color, helmetColor)
+	self.shootTimer = 0
 	self.color = color
 	self.helmetColor = helmetColor
 	self.x = spawnplace[1]
 	self.y = spawnplace[2]
+	self.fx = 1 -- the facing directions
+	self.fy = 0 -- if fy < 0 then the gun should draw first
 	self.health = 100
 	self.dead = false
-	self.loadingin = true
+	self.loadingin = true  -- the animation for joining the game
 	self:randomizeLoadingin()
 	self.animationState = "steady"
 	self.animationFrame = 1
 	self.gunAnimationFrame = 1
+	self.tookDamageTimer = 0 -- this is to flash the screen red
 	self.kills = 0
+	self.playerKills = 0
 	self.points = 0
+	self.killsSinceHurt = 0
 	self.controlScheme = self.defaultControlScheme
+	self.timeSinceLastDamage = 0
+	self.scoreMultiplier = 1
+	self.scoreMultiplierLost = 0
+
+	self.gunTipLocation = {0, 0}
+	self:getGunTipLocation()
 end
 
 function Player:randomizeLoadingin()
@@ -105,15 +107,15 @@ function Player:randomizeLoadingin()
 	end
 end
 
-function Player:drawLoadingin(x, y, viewWidth, viewHeight)
+function Player:drawLoadingin(x, y, viewWidth, viewHeight, viewHorizontalScale, viewVerticalScale)
 	-- self.helmetColor = {0, 0, 0}
 	for i = 1, 19 do
 		love.graphics.setColor(self.color)
 		love.graphics.draw(self.basePlayerImage, self.playerAnimations["loadingin"][i],
-				x, y+self.loadinginSettings[i].y, 0, 1, 1, self.tileWidth/2, self.tileHeight/2)
+				x, (y+self.loadinginSettings[i].y), 0, viewHorizontalScale, viewVerticalScale, self.tileWidth/2, self.tileHeight/2)
 		love.graphics.setColor(self.helmetColor)
 		love.graphics.draw(self.helmetImage, self.helmetAnimations["loadingin"][i],
-				x, y+self.loadinginSettings[i].y, 0, 1, 1, self.tileWidth/2, self.tileHeight/2)
+				x, (y+self.loadinginSettings[i].y), 0, viewHorizontalScale, viewVerticalScale, self.tileWidth/2, self.tileHeight/2)
 	end
 end
 
@@ -203,42 +205,75 @@ function Player:dealDamage(dmg, level)
 	self.health = math.max(self.health-dmg, 0)
 	table.insert(level.bloodstains, {self.x, self.y+self.tileWidth/2, self.color})
 	self.soundManager:playSound("player_damaged")
+	self.killsSinceHurt = 0
+	self.tookDamageTimer = .10
 end
 
-function Player:draw(x, y, viewWidth, viewHeight, screenOwner) -- screenOwner is the playerNumber of the focus of the screen
+function Player:hitSomething(enemyPointValue, enemyType, wasKill)
+	-- self.scoreMultiplier = self.scoreMultiplier + 1
+	if wasKill then
+		self.scoreMultiplier = self.scoreMultiplier + 1 -- 5 total?
+		self.kills = self.kills + 1
+		self.killsSinceHurt = self.killsSinceHurt + 1
+		self.game.soundManager:playSound("player_multiplier_up")
+	end
+	self.timeSinceLastDamage = 0
+	self.scoreMultiplierLost = 0
+	self.scoreMultiplierFaderTime = self.maxScoreMultiplierFaderTime
+	self.points = self.points + enemyPointValue*self.scoreMultiplier
+end
+
+function Player:draw(x, y, viewWidth, viewHeight, screenOwner, viewHorizontalScale, viewVerticalScale) -- screenOwner is the playerNumber of the focus of the screen
 	if self.dead then
 		return
 	end
-	local drawX = math.floor(self.x - x)
-	local drawY = math.floor(self.y - y)
+	-- local drawX = ((x+.5)*self.tileWidth-focusX)*focusHorizontalScale
+	-- local drawY = ((y+.5)*self.tileHeight-focusY)*focusVerticalScale
+	local drawX = math.floor(self.x - x)*viewHorizontalScale
+	local drawY = math.floor(self.y - y)*viewVerticalScale
+	local xScale = viewHorizontalScale
+	local yScale = viewVerticalScale
 	if self.loadingin then
-		self:drawLoadingin(drawX, drawY)
+		self:drawLoadingin(drawX, drawY, viewWidth, viewHeight, viewHorizontalScale, viewVerticalScale)
 		return
 	end
 	love.graphics.setColor(255, 255, 255)
 	if self.fy < 0 then
 		-- then the player is facing upwards
-		self:drawGun(drawX, drawY)
+		self:drawGun(drawX, drawY, viewHorizontalScale, viewVerticalScale)
 	end
 	if self.animationState == "steady" then
 		love.graphics.setColor(self.color)
-		love.graphics.draw(self.basePlayerImage, self.playerAnimations["steady"][self.animationFrame], drawX, drawY, 0, 1, 1, self.tileWidth/2, self.tileHeight/2)
+		love.graphics.draw(self.basePlayerImage, self.playerAnimations["steady"][self.animationFrame], drawX, drawY, 0, xScale, yScale, self.tileWidth/2, self.tileHeight/2)
 		love.graphics.setColor(self.helmetColor)
-		love.graphics.draw(self.helmetImage, self.helmetAnimations["steady"][self.animationFrame], drawX, drawY, 0, 1, 1, self.tileWidth/2, self.tileHeight/2)
+		love.graphics.draw(self.helmetImage, self.helmetAnimations["steady"][self.animationFrame], drawX, drawY, 0, xScale, yScale, self.tileWidth/2, self.tileHeight/2)
 	elseif self.animationState == "walkRight" then -- moving to the right
 		love.graphics.setColor(self.color)
-		love.graphics.draw(self.basePlayerImage, self.playerAnimations["walkRight"][self.animationFrame], drawX, drawY, 0, 1, 1, self.tileWidth/2, self.tileHeight/2)
+		love.graphics.draw(self.basePlayerImage, self.playerAnimations["walkRight"][self.animationFrame], drawX, drawY, 0, xScale, yScale, self.tileWidth/2, self.tileHeight/2)
 		love.graphics.setColor(self.helmetColor)
-		love.graphics.draw(self.helmetImage, self.helmetAnimations["walkRight"][self.animationFrame], drawX, drawY, 0, 1, 1, self.tileWidth/2, self.tileHeight/2)
+		love.graphics.draw(self.helmetImage, self.helmetAnimations["walkRight"][self.animationFrame], drawX, drawY, 0, xScale, yScale, self.tileWidth/2, self.tileHeight/2)
 	elseif self.animationState == "walkLeft" then -- moving to the right
 		love.graphics.setColor(self.color)
-		love.graphics.draw(self.basePlayerImage, self.playerAnimations["walkRight"][self.animationFrame], drawX, drawY, 0, -1, 1, self.tileWidth/2, self.tileHeight/2)
+		love.graphics.draw(self.basePlayerImage, self.playerAnimations["walkRight"][self.animationFrame], drawX, drawY, 0, -xScale, yScale, self.tileWidth/2, self.tileHeight/2)
 		love.graphics.setColor(self.helmetColor)
-		love.graphics.draw(self.helmetImage, self.helmetAnimations["walkRight"][self.animationFrame], drawX, drawY, 0, -1, 1, self.tileWidth/2, self.tileHeight/2)
+		love.graphics.draw(self.helmetImage, self.helmetAnimations["walkRight"][self.animationFrame], drawX, drawY, 0, -xScale, yScale, self.tileWidth/2, self.tileHeight/2)
 	end
 	if self.fy >= 0 then
 		-- then the player is facing upwards
-		self:drawGun(drawX, drawY)
+		self:drawGun(drawX, drawY, viewHorizontalScale, viewVerticalScale)
+	end
+	if self.game.debug then
+		-- draw arrows towards enemies
+		love.graphics.setColor(255, 255, 255)
+		for i, enemy in ipairs(self.gameplay.level.enemies) do
+			if not enemy.dead then
+				local dy = enemy.y-self.y
+				local dx = enemy.x-self.x
+				local angle = math.atan2(dy, dx)
+				local distance = math.sqrt(dx*dx+dy*dy)
+				love.graphics.line(drawX, drawY, drawX+math.cos(angle)*distance*viewHorizontalScale, drawY+math.sin(angle)*distance*viewVerticalScale)
+			end
+		end
 	end
 end
 
@@ -265,23 +300,25 @@ function Player:getGunTipLocation()
 	-- end
 end
 
-function Player:drawGun(x, y)
+function Player:drawGun(x, y, viewHorizontalScale, viewVerticalScale)
 	if self.health > 0 then
+		local xScale = viewHorizontalScale
+		local yScale = viewVerticalScale
 		love.graphics.setColor(255, 255, 255, self.color[4]) -- for the color of the gun
 		local angle = math.atan2(self.fy, self.fx)
 		-- print(angle)
 		if angle >= math.pi/2 and angle < 3/2*math.pi then
-			love.graphics.draw(self.gunImage, self.gunAnimations[self.gunAnimationState][self.gunAnimationFrame], x, y, angle, 1, -1, self.tileWidth/2, self.tileHeight/2)
+			love.graphics.draw(self.gunImage, self.gunAnimations[self.gunAnimationState][self.gunAnimationFrame], x, y, angle, xScale, -yScale, self.tileWidth/2, self.tileHeight/2)
 			love.graphics.setColor(self.color)
-			love.graphics.draw(self.armImage, self.armAnimations[self.gunAnimationState][self.gunAnimationFrame], x, y, angle, 1, -1, self.tileWidth/2, self.tileHeight/2)
+			love.graphics.draw(self.armImage, self.armAnimations[self.gunAnimationState][self.gunAnimationFrame], x, y, angle, xScale, -yScale, self.tileWidth/2, self.tileHeight/2)
 		elseif angle < -math.pi/4 then
-			love.graphics.draw(self.gunImage, self.gunAnimations[self.gunAnimationState][self.gunAnimationFrame], x, y, angle, 1, -1, self.tileWidth/2, self.tileHeight/2)
+			love.graphics.draw(self.gunImage, self.gunAnimations[self.gunAnimationState][self.gunAnimationFrame], x, y, angle, xScale, -yScale, self.tileWidth/2, self.tileHeight/2)
 			love.graphics.setColor(self.color)
-			love.graphics.draw(self.armImage, self.armAnimations[self.gunAnimationState][self.gunAnimationFrame], x, y, angle, 1, -1, self.tileWidth/2, self.tileHeight/2)
+			love.graphics.draw(self.armImage, self.armAnimations[self.gunAnimationState][self.gunAnimationFrame], x, y, angle, xScale, -yScale, self.tileWidth/2, self.tileHeight/2)
 		else
-			love.graphics.draw(self.gunImage, self.gunAnimations[self.gunAnimationState][self.gunAnimationFrame], x, y, angle, 1, 1, self.tileWidth/2, self.tileHeight/2)
+			love.graphics.draw(self.gunImage, self.gunAnimations[self.gunAnimationState][self.gunAnimationFrame], x, y, angle, xScale, yScale, self.tileWidth/2, self.tileHeight/2)
 			love.graphics.setColor(self.color)
-			love.graphics.draw(self.armImage, self.armAnimations[self.gunAnimationState][self.gunAnimationFrame], x, y, angle, 1, 1, self.tileWidth/2, self.tileHeight/2)
+			love.graphics.draw(self.armImage, self.armAnimations[self.gunAnimationState][self.gunAnimationFrame], x, y, angle, xScale, yScale, self.tileWidth/2, self.tileHeight/2)
 		end
 		-- if self.fx < 0 then
 		-- 	love.graphics.draw(self.gunImage, self.gunAnimations[self.gunAnimationState][self.gunAnimationFrame], x, y, angle, -1, 1, self.tileWidth/2, self.tileHeight/2)
@@ -307,7 +344,12 @@ end
 
 function Player:handleMovement(dx, dy, dt)
 	-- I moved this here so I can use it with knockback as well!
-	local move = self.gameplay.level:checkBothCollisions(self.x, self.y, dx*dt, dy*dt, self.collisionWidth, self.collisionHeight)
+	local move = {0, 0}
+	if self.game.noclip then
+		move = {self.x+self.dx*dt, self.y+self.dy*dt}
+	else
+		move = self.gameplay.level:checkBothCollisions(self.x, self.y, dx*dt, dy*dt, self.collisionWidth, self.collisionHeight)
+	end
 	self.x = move[1]
 	self.y = move[2]
 end
@@ -327,6 +369,7 @@ function Player:update(dt)
 			self.health = 0
 			self.dead = true
 			self.soundManager:playSound("player_killed")
+			self.game.lightsManager:setLights({0, 255, 255}, 5)
 		end
 	end
 	if self.dead then
@@ -344,7 +387,25 @@ function Player:update(dt)
 		return
 	end
 	if self.health > 0 then
-		self.gameplay.level.debugCollisionHighlighting = {}
+		self.tookDamageTimer = self.tookDamageTimer - dt
+		self.timeSinceLastDamage = self.timeSinceLastDamage + dt
+		if self.scoreMultiplier > 1 then
+			if self.timeSinceLastDamage > self.scoreMultiplierFaderTime then
+				self.timeSinceLastDamage = 0
+				self.scoreMultiplier = self.scoreMultiplier-1
+				self.scoreMultiplierLost = self.scoreMultiplierLost + 1
+				if self.scoreMultiplierLost > 5 then
+					-- loose the entire thing?
+					self.scoreMultiplier = 1
+					self.scoreMultiplierLost = 0
+					self.scoreMultiplierFaderTime = self.maxScoreMultiplierFaderTime
+					self.game.soundManager:playSound("player_multiplier_lost")
+				else
+					self.scoreMultiplierFaderTime = math.max(1, self.scoreMultiplierFaderTime - 1)
+					self.game.soundManager:playSound("player_multiplier_down")
+				end
+			end
+		end
 		self:getInput(dt)
 		self:handleMovement(self.dx, self.dy, dt)
 

@@ -6,14 +6,17 @@ require "soundmanager"
 
 Gameplay = class()
 
-function Gameplay:_init(game)
+function Gameplay:_init(game, soundManager)
 	self.storeAllCanvases = true -- a performance setting which I may or may not ignore...
 
 	self.game = game
 	self.inputManager = self.game.inputManager
-	self.soundManager = SoundManager(self.game, self, "soundconfig.txt")
+	self.soundManager = soundManager
 	self.soundManager:playSound("startup_music")
 	self.soundManager:playSound("background_music")
+
+	self.verticalScale = 1
+	self.horizontalScale = 1
 
 	-- this is for the draw stack
 	self.drawUnder = false
@@ -41,11 +44,6 @@ function Gameplay:_init(game)
 	self.wholeScreenshakeOneframe = false
 
 	self:loadCheats()
-
-	-- self.cheatCodes.p1 = {["123zxc"]="screenshake", ["1z2x3c"]="megascreenshake", ["1x3z2c"]="debug", ["122333"]="pvp",
-	-- 			["12zxc3"]="controls", ["1zxccc"]="negative", ["1ccccc"]="original", ["1z2ccc"]="ghost"}
-	-- self.cheatCodes.p2 = {["789bnm"]="screenshake", ["7b8n9m"]="megascreenshake", ["7n9b8m"]="debug", ["788999"]="pvp",
-	-- 			["78bnm9"]="controls", ["7bnmmm"]="negative", ["7mmmmm"]="original", ["7b8mmm"]="ghost"}
 	self.cheatStatus = {p1 = "", p2 = "", p3 = "", p4 = ""}
 	-- cheat codes all start with top left and end with bottom right, that way things are easy for me
 	-- I may just have it so that you can only use the other four for the other four parts of the code
@@ -56,12 +54,14 @@ function Gameplay:loadCheats()
 	local i = 0
 	local code = ""
 	for line in love.filesystem.lines("cheatCodes.txt") do
-		if i % 2 == 0 then
-			code = line
-		else
-			self.cheatCodes[code] = line
+		if line ~= "" then
+			if i % 2 == 0 then
+				code = line
+			else
+				self.cheatCodes[code] = line
+			end
+			i = i + 1
 		end
-		i = i + 1
 	end
 end
 
@@ -184,27 +184,34 @@ end
 
 function Gameplay:load()
 	-- run when the level is given control
+	self.game.soundManager:playSound("gameplay_music")
 end
 
 function Gameplay:leave()
 	-- run when the level no longer has control
+	self.level:reloadLevel()
+	self.game.soundManager:stopSound("gameplay_music")
 end
 
 function Gameplay:drawForPlayer(screenNum, screenWidth, screenHeight)
 	local p = self.playersInGame[screenNum]
-	local x = math.floor(p.x - screenWidth/2)
-	local y = math.floor(p.y - screenHeight/2)
+	local x = math.floor(p.x - screenWidth/2/self.horizontalScale)
+	local y = math.floor(p.y - screenHeight/2/self.verticalScale)
 
 	love.graphics.setColor(255, 255, 255)
 
-	self.level:drawbase(x, y, screenWidth, screenHeight)
-	self.level:drawBloodstains(x, y, screenWidth, screenHeight)
-	self.level:drawEnemies(x, y, screenWidth, screenHeight)
+	self.level:drawbase(x, y, screenWidth, screenHeight, self.horizontalScale, self.verticalScale)
+	self.level:drawBloodstains(x, y, screenWidth, screenHeight, self.horizontalScale, self.verticalScale)
+	self.level:drawEnemies(x, y, screenWidth, screenHeight, self.horizontalScale, self.verticalScale)
 	for i, player in ipairs(self.playersInGame) do
-		player:draw(x, y, screenWidth, screenHeight, p.playerNumber)
+		player:draw(x, y, screenWidth, screenHeight, p.playerNumber, self.horizontalScale, self.verticalScale)
 	end
-	self.level:drawBullets(x, y, screenWidth, screenHeight)
-	self.level:drawtop(x, y, screenWidth, screenHeight)
+	self.level:drawBullets(x, y, screenWidth, screenHeight, self.horizontalScale, self.verticalScale)
+	self.level:drawtop(x, y, screenWidth, screenHeight, self.horizontalScale, self.verticalScale)
+	if self.playersInGame[screenNum].tookDamageTimer > 0 then
+		return {255, 200, 200}
+	end
+	return {255, 255, 255}
 end
 
 function Gameplay:drawPlayerIndicators()
@@ -212,7 +219,7 @@ function Gameplay:drawPlayerIndicators()
 		love.graphics.setColor(255, 255, 255)
 		love.graphics.printf("P1: Join in now!", 0, 0, love.graphics.getWidth(), "left")
 	else
-		love.graphics.setColor(self.players[1].color)
+		love.graphics.setColor(self.players[1].color) --  .. " M: "..self.players[1].scoreMultiplier
 		love.graphics.printf("P1: Health "..math.max(self.players[1].health, 0).." Points: "..self.players[1].points, 0, 0, love.graphics.getWidth(), "left")
 
 	end
@@ -223,9 +230,13 @@ function Gameplay:drawPlayerIndicators()
 		love.graphics.setColor(self.players[2].color)
 		love.graphics.printf("P2: Health: "..math.max(self.players[2].health, 0).." Points: "..self.players[2].points, 0, 0, love.graphics.getWidth(), "right")
 	end
-	if self.game.playerLimit == 4 then
-		--
-	end
+	love.graphics.setColor(255, 255, 255)
+	-- local enemyText = (self.level.totalNumberOfEnemies-self.level.numberOfEnemies).."/"..self.level.totalNumberOfEnemies.." enemies killed"
+	local enemyText = self.level.numberOfEnemies.." enemies left!"
+	love.graphics.printf(enemyText, 0, 0, love.graphics.getWidth(), "center")
+	-- if self.game.playerLimit == 4 then
+	-- 	--
+	-- end
 end
 
 function Gameplay:draw()
@@ -246,13 +257,14 @@ function Gameplay:draw()
 		love.graphics.setCanvas(self.singleCanvas)
 		love.graphics.clear()
 
-		self:drawForPlayer(1, self.game.SCREENWIDTH, self.game.SCREENHEIGHT)
+		local screenTint = self:drawForPlayer(1, self.game.SCREENWIDTH, self.game.SCREENHEIGHT)
 		love.graphics.setCanvas()
-		love.graphics.setColor(255, 255, 255)
+		love.graphics.setColor(screenTint)--255, 255, 255)
 		love.graphics.draw(self.singleCanvas, 0, 0, 0, love.graphics.getWidth()/self.game.SCREENWIDTH, love.graphics.getHeight()/self.game.SCREENHEIGHT)
 		if didScreenshake then
 			love.graphics.translate(-self.screenshakedx, -self.screenshakedy)
 		end
+		love.graphics.setColor(255, 255, 255)
 		self:drawPlayerIndicators()
 	elseif self.numPlayersPlaying == 2 then
 		-- if self.game.screenShake and self.wholeScreenshakeDuration > 0 then
@@ -261,17 +273,19 @@ function Gameplay:draw()
 		love.graphics.setCanvas(self.doubleCanvas[1])
 		love.graphics.clear()
 		--
-		self:drawForPlayer(1, self.game.SCREENWIDTH/2, self.game.SCREENHEIGHT)
+		local screenTint1 = self:drawForPlayer(1, self.game.SCREENWIDTH/2, self.game.SCREENHEIGHT)
 		--
 		love.graphics.setCanvas(self.doubleCanvas[2])
 		love.graphics.clear()
 		--
-		self:drawForPlayer(2, self.game.SCREENWIDTH/2, self.game.SCREENHEIGHT)
+		local screenTint2 = self:drawForPlayer(2, self.game.SCREENWIDTH/2, self.game.SCREENHEIGHT)
 		--
 		love.graphics.setCanvas()
-		love.graphics.setColor(255, 255, 255)
+		love.graphics.setColor(screenTint1)--255, 255, 255)
 		love.graphics.draw(self.doubleCanvas[1], 0, 0, 0, love.graphics.getWidth()/self.game.SCREENWIDTH, love.graphics.getHeight()/self.game.SCREENHEIGHT)
+		love.graphics.setColor(screenTint2)
 		love.graphics.draw(self.doubleCanvas[2], love.graphics.getWidth()/2, 0, 0, love.graphics.getWidth()/self.game.SCREENWIDTH, love.graphics.getHeight()/self.game.SCREENHEIGHT)
+		love.graphics.setColor(255, 255, 255)
 		-- draw the dividing lines
 		if didScreenshake then
 			love.graphics.translate(-self.screenshakedx, -self.screenshakedy)
@@ -323,11 +337,18 @@ function Gameplay:resize(w, h)
 end
 
 function Gameplay:keypressed(key, unicode)
+	if self.game.debug and key == "-" then
+		self.verticalScale = self.verticalScale/2
+		self.horizontalScale = self.horizontalScale/2
+	elseif self.game.debug and key == "=" then
+		self.verticalScale = self.verticalScale*2
+		self.horizontalScale = self.horizontalScale*2
+	end
 	if key == "escape" then
 		love.event.quit()
 	end
 	if key == "]" then
-		self.level.numberOfEnemies = 0
+		self.level.numberOfEnemies = self.level.numberOfEnemies - 1
 	end
 	if key == "p" then
 		self:startWholeGameScreenshake(10, 10, 1.001)

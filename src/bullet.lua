@@ -32,23 +32,34 @@ function Bullet:_init(data) --game, level, x, y, dx, dy, speed, originPlayernum,
 	self.collisionWidth = 6*4
 	self.collisionHeight = 6*4
 
-	self.damage = 10
+	if self.game.megadamage and self.bulletType == "player" then
+		self.damage = 10000
+	else
+		self.damage = 10
+	end
 	self.humanpointValue = 5
-	self.enemypointValue = 10
-	self.didDamage = false
+	self.enemypointValue = 1 -- for now just 1, but gets multiplied by your score multiplier
+	self.didDamage = data.didDamage or false
 
 	self.animationState = data.animationState or "still" -- flying, exploding, dead?
 	self.animationFrame = 1
 	self.animationTime = data.animationTime or 0
 	-- self.wasDrawn = false
+	if self.game.largeScreenShake then
+		self.game.gameplay:startWholeGameScreenshake(.1, 5, 1, false)
+	else
+		self.game.gameplay:startWholeGameScreenshake(1, 2, 1, true)
+	end
 end
 
-function Bullet:draw(viewx, viewy)
+function Bullet:draw(viewx, viewy, viewWidth, viewHeight, xScale, yScale)
+	local drawX = math.floor((self.x - viewx)*xScale)
+	local drawY = math.floor((self.y - viewy)*yScale)
 	love.graphics.setColor(self.color)
 	if self.bulletType == "enemy" then
-		love.graphics.draw(self.graphics.image, self.graphics.animations[self.animationState.."plant"][self.animationFrame], self.x-viewx, self.y-viewy, self.angle, 1, 1, self.graphics.animationDetails.imageWidth/2, self.graphics.animationDetails.imageWidth/2)
+		love.graphics.draw(self.graphics.image, self.graphics.animations[self.animationState.."plant"][self.animationFrame], drawX, drawY, self.angle, xScale, yScale, self.graphics.animationDetails.imageWidth/2, self.graphics.animationDetails.imageWidth/2)
 	else
-		love.graphics.draw(self.graphics.image, self.graphics.animations[self.animationState][self.animationFrame], self.x-viewx, self.y-viewy, self.angle, 1, 1, self.graphics.animationDetails.imageWidth/2, self.graphics.animationDetails.imageWidth/2)
+		love.graphics.draw(self.graphics.image, self.graphics.animations[self.animationState][self.animationFrame], drawX, drawY, self.angle, xScale, yScale, self.graphics.animationDetails.imageWidth/2, self.graphics.animationDetails.imageWidth/2)
 	end
 	-- if self.animationState == "exploding" then
 	-- 	print("exploding "..math.random())
@@ -106,9 +117,9 @@ function Bullet:update(dt)
 							self:hitSomething(true, true)
 							self.didDamage = true
 							if self.originPlayernum ~= -1 then
-								self.allPlayers[self.originPlayernum].points = self.allPlayers[self.originPlayernum].points + self.humanpointValue
-								if p.health <= 0 then
-									self.allPlayers[self.originPlayernum].kills = self.allPlayers[self.originPlayernum].kills + 1
+								-- self.allPlayers[self.originPlayernum].points = self.allPlayers[self.originPlayernum].points + self.humanpointValue
+								if self.allPlayers[self.originPlayernum] ~= nil and p.health <= 0 then
+									self.allPlayers[self.originPlayernum].playerKills = self.allPlayers[self.originPlayernum].playerKills + 1
 								end
 							end
 						end
@@ -143,11 +154,13 @@ function Bullet:update(dt)
 						p:dealDamage(self.damage, self.level)
 						self:hitSomething(true, true)
 						self.didDamage = true
-						if self.originPlayernum ~= -1 then
-							self.allPlayers[self.originPlayernum].points = self.allPlayers[self.originPlayernum].points + self.enemypointValue
-							if p.health <= 0 then
-								self.allPlayers[self.originPlayernum].kills = self.allPlayers[self.originPlayernum].kills + 1
-							end
+						if self.originPlayernum ~= -1 and self.allPlayers[self.originPlayernum] ~= nil then
+							self.allPlayers[self.originPlayernum]:hitSomething(self.enemypointValue, p.type, p.health <= 0) -- pass in enemyPointValue, enemyType, whether it killed it
+							-- self.allPlayers[self.originPlayernum].points = self.allPlayers[self.originPlayernum].points + self.enemypointValue + self.allPlayers[self.originPlayernum].killsSinceHurt
+							-- if p.health <= 0 then
+								-- self.allPlayers[self.originPlayernum].kills = self.allPlayers[self.originPlayernum].kills + 1
+								-- self.allPlayers[self.originPlayernum].killsSinceHurt = self.allPlayers[self.originPlayernum].killsSinceHurt + 1
+							-- end
 						end
 					end
 				end
@@ -174,7 +187,7 @@ function Bullet:update(dt)
 		-- self.bulletType = "player" -- I swapped this in favor of changing the animation key so I could have custom sounds if I ever get there...
 		self.animationState = "dead"
 		for i = 1, math.random(4, 10) do
-			self.level.gameplay:createBullet{x = self.x+25*(math.random()*2-1), y = self.y+25*(math.random()*2-1), dx = self.dx, dy = self.dy, speed = 0, originPlayernum = -1, color = self.color, bulletType = "player", randomize = true, animationType = "explode", animationTime = .1-.2*math.random()}
+			self.level.gameplay:createBullet{x = self.x+25*(math.random()*2-1), y = self.y+25*(math.random()*2-1), dx = self.dx, dy = self.dy, speed = 0, originPlayernum = -1, color = self.color, bulletType = "player", randomize = true, animationType = "explode", animationTime = .1-.1*math.random(), didDamage = true}
 		end
 	end
 end

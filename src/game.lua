@@ -14,6 +14,7 @@ require "inputmanager"
 require "class"
 require "winmenu"
 require "mainmenu"
+require "lightsmanager"
 
 Game = class()
 
@@ -33,7 +34,10 @@ Game = class()
 
 function Game:_init()
 	-- settings:
-	self.arcadeCabinet = false
+	self.arcadeCabinet = true
+	self.networkedLights = true
+	self.useOldLevel = false
+	self.endOnEverythingKilled = true
 
 	self.pvpOn = false
 	self.screenShake = true -- on by default makes sense
@@ -41,6 +45,10 @@ function Game:_init()
 	self.debug = false
 	self.negativeLoadingin = false
 	self.gruesomeOn = true
+	
+	self.noclip = false
+	self.megadamage = false
+	self.superspeed = false
 
 
 	-- these are for draw stacks:
@@ -63,11 +71,18 @@ function Game:_init()
 	self.fullscreen = true
 	self.playerLimit = 2
 
+	self.soundManager = SoundManager(self.game, self, "soundconfig.txt")
+
 	self.inputManager = InputManager(self)
 
 	self.mainMenu = MainMenu(self)
 	self.winMenu = WinMenu(self)
-	self.gameplay = Gameplay(self)
+	self.gameplay = Gameplay(self, self.soundManager)
+
+	self.lightsManager = LightsManager(self)
+	if self.networkedLights then
+		self.lightsManager:connect()
+	end
 
 	self.screenStack = {}
 	
@@ -86,19 +101,19 @@ function Game:takeScreenshot()
 	screenshot:encode('png', os.time()..'.png')
 end
 
-function Game:draw()
-	-- love.graphics.setCanvas(self.fullCanvas)
-	-- love.graphics.clear()
-
-	local thingsToDraw = 1 -- this will become the index of the lowest item to draw
+function Game:calculateDrawUpdateLevels()
+	self.drawLayersStart = 1 -- this will become the index of the lowest item to draw
 	for i = #self.screenStack, 1, -1 do
-		thingsToDraw = i
+		self.drawLayersStart = i
 		if not self.screenStack[i].drawUnder then
 			break
 		end
 	end
+end
+
+function Game:draw()
 	-- this is so that the things earlier in the screen stack get drawn first, so that things like pause menus get drawn on top.
-	for i = thingsToDraw, #self.screenStack, 1 do
+	for i = self.drawLayersStart, #self.screenStack, 1 do
 		self.screenStack[i]:draw()
 	end
 
@@ -109,26 +124,6 @@ function Game:draw()
 		love.graphics.print("FPS: "..love.timer.getFPS(), 10, love.graphics.getHeight()-45)
 		love.graphics.setColor(255, 255, 255)
 	end
-	
-	-- if true or self.fullscreen then
-	-- 	local width = love.graphics.getWidth()
-	-- 	local height = love.graphics.getHeight()
-	-- 	local scale = math.min(height/self.SCREENHEIGHT, width/self.SCREENWIDTH)
-	-- 	-- width/2-300*scale
-	-- 	love.graphics.draw(self.fullCanvas, width/2-self.SCREENWIDTH/2*scale, height/2-self.SCREENHEIGHT/2*scale, 0, scale, scale)
-	-- 	love.graphics.setColor(0, 0, 0)
-	-- 	-- the left and right bars
-	-- 	love.graphics.rectangle("fill", 0, 0, width/2-self.SCREENWIDTH/2*scale, height)
-	-- 	love.graphics.rectangle("fill", width/2+self.SCREENWIDTH/2*scale, 0, width/2-self.SCREENWIDTH/2*scale, height)
-	-- 	-- the top and bottom bars
-	-- 	-- love.graphics.setColor(255, 0, 0)
-	-- 	love.graphics.rectangle("fill", 0, 0, width, height/2-self.SCREENHEIGHT/2*scale)
-	-- 	love.graphics.rectangle("fill", 0, height, width, -(height/2-self.SCREENHEIGHT/2*scale))
-	-- 	love.graphics.setColor(255, 255, 255)
-	-- else
-	-- 	local scale = math.min(love.graphics.getHeight()/self.SCREENHEIGHT, love.graphics.getWidth()/self.SCREENWIDTH)
-	-- 	love.graphics.draw(self.fullCanvas, 0, 0, 0, scale, scale)
-	-- end
 end
 
 function Game:realToFakeMouse(x, y)
@@ -149,12 +144,16 @@ function Game:update(dt)
 		end
 	end
 	self.inputManager:update(dt)
+	if self.networkedLights then
+		self.lightsManager:update(dt)
+	end
 end
 
 function Game:popScreenStack()
 	self.screenStack[#self.screenStack]:leave()
 	self.screenStack[#self.screenStack] = nil
 	self.screenStack[#self.screenStack]:load()
+	self:calculateDrawUpdateLevels()
 end
 
 function Game:addToScreenStack(newScreen)
@@ -163,6 +162,7 @@ function Game:addToScreenStack(newScreen)
 	end
 	self.screenStack[#self.screenStack+1] = newScreen
 	newScreen:load()
+	self:calculateDrawUpdateLevels()
 end
 
 function Game:resize(w, h)

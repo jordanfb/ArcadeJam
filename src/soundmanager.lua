@@ -67,3 +67,11 @@ function SoundManager:playSound(soundName)
 		end
 	end
 end
+
+function SoundManager:stopSound(soundName)
+	if self.soundFiles[soundName] ~= nil then
+		for i, sound in ipairs(self.soundFiles[soundName].sounds) do
+			sound:stop()
+		end
+	end
+end
