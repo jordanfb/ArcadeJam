@@ -10,10 +10,15 @@ function Player:_init(game, gameplay, playerNumber, soundManager)
 	self.helmetImageFilename = "helmetimage"
 	self.gunImageFilename = "gunanimations"
 	self.armImageFilename = "armanimations"
+
+	self.superspeed = false -- cheat codes, changed by gameplay
+	self.megadamage = false
+	self.noclip = false
+
 	self.tileWidth = 32*4 -- these have to be for all player images for functions to work!
 	self.tileHeight = 32*4
 	self.maxSpeed = 300
-	if game.superspeed then
+	if self.superspeed then
 		self.maxSpeed = 300*3
 	end
 	self.shootDelay = .1
@@ -61,6 +66,8 @@ function Player:_init(game, gameplay, playerNumber, soundManager)
 	self.gunAnimationState = "still"
 	self.gunAnimationTime = 0
 	self.gunAnimationFrame = 1
+
+	self.bulletDamage = 10 -- this can be changed with a cheat code
 
 	self:resetPlayer({-100, -100}, {255, 255, 255, 255}, {255, 255, 255, 255})
 	self.controlScheme = "onebutton" -- this gets overwritten to the default value in gameplay
@@ -345,7 +352,7 @@ end
 function Player:handleMovement(dx, dy, dt)
 	-- I moved this here so I can use it with knockback as well!
 	local move = {0, 0}
-	if self.game.noclip then
+	if self.noclip then
 		move = {self.x+self.dx*dt, self.y+self.dy*dt}
 	else
 		move = self.gameplay.level:checkBothCollisions(self.x, self.y, dx*dt, dy*dt, self.collisionWidth, self.collisionHeight)
@@ -414,7 +421,7 @@ function Player:update(dt)
 			if self.inputManager:isDown(self.playerNumber, "shoot") then
 				self.gunAnimationState = "firing"
 				if self.shootTimer <= 0 then
-					self.gameplay:createBullet{x = self.x+self.gunTipLocation[1], y = self.y+self.gunTipLocation[2], dx = self.fx, dy = self.fy, speed = 1000, originPlayernum = self.playerNumber, color = self.color, bulletType = "player", randomize = true}
+					self.gameplay:createBullet{x = self.x+self.gunTipLocation[1], y = self.y+self.gunTipLocation[2], dx = self.fx, dy = self.fy, speed = 1000, originPlayernum = self.playerNumber, color = self.color, bulletType = "player", randomize = true, damage = self.bulletDamage}
 					self.soundManager:playSound("player_bullet_fired")
 					self.shootTimer = self.shootDelay
 					self:handleMovement(-self:signOrZero(self.fx)*self.knockback, -self:signOrZero(self.fy)*self.knockback, dt)

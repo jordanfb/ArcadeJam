@@ -440,6 +440,24 @@ function Gameplay:setCheat(code, playernumber)
 		self.players[playernumber].helmetColor[4] = 50
 	elseif code == "gruesome" then
 		self.game.gruesomeOn = not self.game.gruesomeOn
+	elseif code == "megadamage" then
+		if self.players[playernumber].megadamage then
+			self.players[playernumber].bulletDamage = 10
+			self.players[playernumber].megadamage = true
+		else
+			self.players[playernumber].bulletDamage = 1000
+			self.players[playernumber].megadamage = false
+		end
+	elseif code == "speed" then
+		if self.players[playernumber].megaspeed then
+			self.players[playernumber].maxSpeed = 300
+			self.players[playernumber].megaspeed = false
+		else
+			self.players[playernumber].maxSpeed = 300*3
+			self.players[playernumber].megaspeed = true
+		end
+	elseif code == "noclip" then
+		self.players[playernumber].noclip = not self.players[playernumber].noclip
 	end
 end
 

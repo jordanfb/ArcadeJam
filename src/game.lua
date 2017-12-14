@@ -35,7 +35,7 @@ Game = class()
 function Game:_init()
 	-- settings:
 	self.arcadeCabinet = true
-	self.networkedLights = true
+	self.networkedLights = false
 	self.useOldLevel = false
 	self.endOnEverythingKilled = true
 
@@ -46,9 +46,9 @@ function Game:_init()
 	self.negativeLoadingin = false
 	self.gruesomeOn = true
 	
-	self.noclip = false
-	self.megadamage = false
-	self.superspeed = false
+	-- self.noclip = false -- done for each player now I guess
+	-- self.megadamage = false -- this is now done in each player
+	-- self.superspeed = false -- this too is now done in each player
 
 
 	-- these are for draw stacks:

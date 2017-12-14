@@ -33,9 +33,9 @@ function Bullet:_init(data) --game, level, x, y, dx, dy, speed, originPlayernum,
 	self.collisionHeight = 6*4
 
 	if self.game.megadamage and self.bulletType == "player" then
-		self.damage = 10000
+		self.damage = data.damage or 10000
 	else
-		self.damage = 10
+		self.damage = data.damage or 10
 	end
 	self.humanpointValue = 5
 	self.enemypointValue = 1 -- for now just 1, but gets multiplied by your score multiplier
