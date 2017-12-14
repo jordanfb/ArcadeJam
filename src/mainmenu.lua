@@ -11,6 +11,14 @@ MainMenu = class()
 --[[
 This is pretty much just an attract screen, as soon as you press either a the start buttons or any button (probably a setting)
 you get taken into the gameplay class. This may have AI or may have a video or may just be awesome.
+
+this is now being changed because I want to have have high-scores, which means that I should probably
+keep track of deaths and cheating etc. Consequently I'm going to have a number of player selector
+here on the main menu, and then later have a high-score entry table with player initials or something.
+I may also put a help button here on the main menu, but maybe not...
+
+How is this going to work? I should have buttons that are selected with the movement keys, and
+pressed by the fire keys or the start buttons. sounds good. I'll have to remember how that whooole thing works.
 ]]--
 
 function MainMenu:_init(game)
